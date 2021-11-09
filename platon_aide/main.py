@@ -77,7 +77,7 @@ class Module:
             raise ValueError('Unrecognized value')
 
 
-class PlatonAid:
+class PlatonAide:
     """ 主类，platon各个子模块的集合体，同时支持创建账户、解码等非交易类的操作
     """
 
