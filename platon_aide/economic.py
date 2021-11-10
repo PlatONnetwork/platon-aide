@@ -1,9 +1,10 @@
 from decimal import Decimal
 from typing import Literal
-
 from platon import Web3
 from platon.datastructures import AttributeDict
-from main import Module, ec_recover
+
+from module import Module
+from utils import ec_recover
 
 
 class _ChainData(AttributeDict):
@@ -58,9 +59,9 @@ class _RestrictingData(AttributeDict):
 
 
 class _GasData:
-    transferGas: 21000
-    restrictingGas: 100000
-    governGasPrice: 2100000
+    transferGas: int = 21000
+    restrictingGas: int = 100000
+    governGasPrice: int = 2100000
 
 
 class GenesisData:

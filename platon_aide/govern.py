@@ -2,7 +2,7 @@ from time import time
 from platon import Web3
 from platon.datastructures import AttributeDict
 
-from main import Module
+from module import Module
 from utils import contract_transaction
 
 

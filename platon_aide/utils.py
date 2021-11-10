@@ -1,5 +1,4 @@
 import functools
-
 import rlp
 from hexbytes import HexBytes
 from platon import Web3

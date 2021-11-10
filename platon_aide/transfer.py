@@ -1,5 +1,5 @@
+from module import Module
 from economic import gas
-from main import Module
 from utils import contract_transaction
 
 
@@ -10,7 +10,7 @@ class Transfer(Module):
         base_txn = {
             "to": to_address,
             "gasPrice": self.web3.platon.gas_price,
-            "gas": gas.Transfer_gas,
+            "gas": gas.transferGas,
             "data": '',
             "chainId": self.web3.chain_id,
             "value": amount,
@@ -22,7 +22,7 @@ class Transfer(Module):
         return self.send_transaction(txn, private_key, self.returns)
 
     @contract_transaction
-    def restricting(self, release_address, plans, txn=gas.Restricting_gas, private_key=None):
+    def restricting(self, release_address, plans, txn=gas.restrictingGas, private_key=None):
         return self.web3.restricting.create_restricting(release_address, plans)
 
     def get_balance(self, account, block_identifier=None):

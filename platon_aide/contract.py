@@ -3,8 +3,8 @@ from typing import Literal
 from platon._utils.abi import filter_by_name
 from platon.contract import ContractFunction
 
-from main import Module
-from platon_aide.utils import contract_call, contract_transaction
+from utils import contract_call, contract_transaction
+from module import Module
 
 
 class Contract(Module):

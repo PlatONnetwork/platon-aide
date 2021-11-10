@@ -1,7 +1,7 @@
 from platon import Web3
 
-from main import Module
-from platon_aide.utils import contract_transaction
+from module import Module
+from utils import contract_transaction
 
 
 class Slashing(Module):

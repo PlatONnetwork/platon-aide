@@ -1,5 +1,4 @@
 import time
-
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon.middleware import gplaton_poa_middleware
 
@@ -26,36 +25,6 @@ def get_web3(uri, chain_id=None, hrp=None):
     return Web3(provider(uri), chain_id=chain_id, hrp=hrp)
 
 
-class Module:
-    address: None
-
-    def __init__(self, web3: Web3):
-        self.web3 = web3
-        self.default_account = None
-        self.returns = 'receipt'  # 包含：txn, hash, receipt
-
-    def _get_node_info(self):
-        node_info = self.web3.node.admin.node_info()
-        self.node_id = node_info['id']
-        self.bls_pubkey = node_info['blsPubKey']
-        self.bls_proof = self.web3.node.admin.get_schnorr_NIZK_prove()
-        version_info = self.web3.node.admin.get_program_version()
-        self.version = version_info['Version']
-        self.version_sign = version_info['Sign']
-
-    def send_transaction(self, txn, private_key, returns='receipt'):
-        return send_transaction(self.web3, txn, private_key, returns)
-
-    def set_default_account(self, account):
-        self.default_account = account
-
-    def set_returns(self, returns):
-        if returns in ('txn', 'hash', 'receipt'):
-            self.returns = returns
-        else:
-            raise ValueError('Unrecognized value')
-
-
 class PlatonAide:
     """ 主类，platon各个子模块的集合体，同时支持创建账户、解码等非交易类的操作
     """
@@ -64,7 +33,6 @@ class PlatonAide:
         self.uri = uri
         self.web3 = get_web3(uri, chain_id, hrp)
         self.web3.middleware_onion.inject(gplaton_poa_middleware, layer=0)
-        super().__init__(self.web3)
         self.hrp = hrp or self.web3.hrp
         self.chain_id = chain_id or self.web3.platon.chain_id
         # 加入接口和模块

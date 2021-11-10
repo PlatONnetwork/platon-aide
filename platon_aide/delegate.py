@@ -1,9 +1,10 @@
 from platon import Web3
 
-from economic import gas
-from main import Module
-from utils import contract_transaction
+from module import Module
 from staking import Staking
+from economic import gas
+from utils import contract_transaction
+
 
 
 class Delegate(Module):
