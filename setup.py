@@ -6,13 +6,13 @@ from setuptools import (
 
 deps = {
     'platon-aide': [
-        'platon.py>=1.1.1'
-        'platon_account>=0.5.5'
-        'platon_hash>=0.3.1'
-        'platon_keys>=0.3.3'
-        'platon_typing>=2.2.3'
-        'platon_utils>=1.10.0'
-        'rlp>=1.2.0'
+        'platon.py>=1.1.1',
+        'platon_account>=0.5.5',
+        'platon_hash>=0.3.1',
+        'platon_keys>=0.3.3',
+        'platon_typing>=2.2.3',
+        'platon_utils>=1.10.0',
+        'rlp>=1.2.0',
     ]
 }
 
