@@ -1,3 +1,5 @@
+import functools
+
 import rlp
 from hexbytes import HexBytes
 from platon import Web3
@@ -34,6 +36,36 @@ def send_transaction(web3: Web3, txn: dict, private_key: str, returns='receipt')
     if type(receipt) is bytes:
         receipt = receipt.decode('utf-8')
     return receipt
+
+
+def contract_transaction(func):
+    """
+    包装类，用于在调用Module及其子类的方法时，自定义要返回的结果
+    可以返回未发送的交易dict、交易hash、交易回执
+    """
+
+    @functools.wraps(func)
+    def wrapper(self, *args, txn, private_key, **kwargs):
+        private_key = private_key or self.default_account.private_key
+
+        if not private_key:
+            raise ValueError('arg错误')
+
+        txn = func(*args, **kwargs).build_transaction(txn)
+        if self.returns == 'txn':
+            return txn
+        return self.send_transaction(txn, private_key, self.returns)
+
+    return wrapper
+
+
+def contract_call(func):
+
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        return func(*args, **kwargs).call()
+
+    return wrapper
 
 
 def ec_recover(block: BlockData):

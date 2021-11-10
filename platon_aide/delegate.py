@@ -1,7 +1,8 @@
 from platon import Web3
 
 from economic import gas
-from main import Module, custom_return
+from main import Module
+from utils import contract_transaction
 from staking import Staking
 
 
@@ -16,7 +17,7 @@ class Delegate(Module):
         staking = Staking(self.web3)
         return staking.staking_info.StakingBlockNum
 
-    @custom_return
+    @contract_transaction
     def delegate(self,
                  amount=None,
                  balance_type=0,
@@ -30,7 +31,7 @@ class Delegate(Module):
         node_id = node_id or self.node_id
         return self.web3.ppos.delegate.delegate(node_id, balance_type, amount)
 
-    @custom_return
+    @contract_transaction
     def withdrew_delegate(self,
                           amount=0,
                           staking_block_identifier=None,
@@ -73,7 +74,7 @@ class Delegate(Module):
             address = address or self.default_account.address
         return self.web3.ppos.delegate.get_delegate_list(address)
 
-    @custom_return
+    @contract_transaction
     def withdraw_delegate_reward(self,
                                  txn=None,
                                  private_key=None,

@@ -1,5 +1,6 @@
 from economic import gas
-from main import Module, custom_return
+from main import Module
+from utils import contract_transaction
 
 
 class Transfer(Module):
@@ -20,7 +21,7 @@ class Transfer(Module):
             return txn
         return self.send_transaction(txn, private_key, self.returns)
 
-    @custom_return
+    @contract_transaction
     def restricting(self, release_address, plans, txn=gas.Restricting_gas, private_key=None):
         return self.web3.restricting.create_restricting(release_address, plans)
 

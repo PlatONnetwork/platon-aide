@@ -2,7 +2,8 @@ from time import time
 from platon import Web3
 from platon.datastructures import AttributeDict
 
-from main import Module, custom_return
+from main import Module
+from utils import contract_transaction
 
 
 class _ChainVersion(AttributeDict):
@@ -90,7 +91,7 @@ class Govern(Module):
             'patch': version_byte[2],
         })
 
-    @custom_return
+    @contract_transaction
     def version_proposal(self,
                          version,
                          voting_rounds=4,
@@ -104,7 +105,7 @@ class Govern(Module):
         node_id = node_id or self.node_id
         return self.web3.pip.submit_version_proposal(node_id, pip_number, version, voting_rounds)
 
-    @custom_return
+    @contract_transaction
     def param_version(self,
                       module,
                       name,
@@ -119,7 +120,7 @@ class Govern(Module):
         node_id = node_id or self.node_id
         return self.web3.pip.submit_param_proposal(node_id, pip_number, module, name, value)
 
-    @custom_return
+    @contract_transaction
     def cancel_proposal(self,
                         proposal_id,
                         voting_rounds=4,
@@ -131,7 +132,7 @@ class Govern(Module):
         node_id = node_id or self.node_id
         return self.web3.pip.submit_cancel_proposal(node_id, pip_number, voting_rounds, proposal_id)
 
-    @custom_return
+    @contract_transaction
     def text_proposal(self,
                       pip_number=second(),
                       node_id=None,
@@ -143,7 +144,7 @@ class Govern(Module):
         node_id = node_id or self.node_id
         return self.web3.pip.submit_text_proposal(node_id, pip_number)
 
-    @custom_return
+    @contract_transaction
     def vote(self,
              proposal_id,
              option,
@@ -160,7 +161,7 @@ class Govern(Module):
         version = version or self.version_sign
         return self.web3.pip.vote(node_id, proposal_id, option, version, version_sign)
 
-    @custom_return
+    @contract_transaction
     def declare_version(self,
                         node_id=None,
                         version=None,

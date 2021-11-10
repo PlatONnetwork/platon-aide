@@ -2,7 +2,8 @@ from platon import Web3
 from platon.datastructures import AttributeDict
 
 from economic import gas
-from main import Module, custom_return
+from main import Module
+from utils import contract_transaction
 
 
 class _StakingInfo(AttributeDict):
@@ -51,7 +52,7 @@ class Staking(Module):
             return candidate_info
         raise AttributeError('the node has no staking information.')
 
-    @custom_return
+    @contract_transaction
     def create_staking(self,
                        amount=None,
                        balance_type=0,
@@ -86,7 +87,7 @@ class Staking(Module):
                                                      version, version_sign, bls_pubkey, bls_proof
                                                      )
 
-    @custom_return
+    @contract_transaction
     def increase_staking(self,
                          balance_type=0,
                          node_id=None,
@@ -98,12 +99,12 @@ class Staking(Module):
         amount = amount or gas.add_staking_limit
         return self.web3.ppos.staking.increase_staking(node_id, balance_type, amount)
 
-    @custom_return
+    @contract_transaction
     def withdrew_staking(self, node_id=None, txn=None, private_key=None):
         node_id = node_id or self.node_id
         return self.web3.ppos.staking.withdrew_staking(node_id)
 
-    @custom_return
+    @contract_transaction
     def edit_candidate(self,
                        benifit_address=None,
                        node_id=None,

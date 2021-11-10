@@ -1,4 +1,3 @@
-import functools
 import time
 
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
@@ -6,11 +5,10 @@ from platon.middleware import gplaton_poa_middleware
 
 from economic import gas
 from govern import Govern
-from solidity import Solidity
+from contract import Contract
 from staking import Staking
 from transfer import Transfer
 from utils import send_transaction, ec_recover
-from wasm import Wasm
 
 
 def get_web3(uri, chain_id=None, hrp=None):
@@ -26,25 +24,6 @@ def get_web3(uri, chain_id=None, hrp=None):
         raise ValueError(f'unidentifiable uri {uri}')
 
     return Web3(provider(uri), chain_id=chain_id, hrp=hrp)
-
-
-def custom_return(func):
-    """
-    包装类，用于在调用Module及其子类的方法时，自定义要返回的结果
-    可以返回未发送的交易dict、交易hash、交易回执
-    """
-
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
-        txn = kwargs['txn']
-        private_key = kwargs['private_key'] or self.default_account.private_key
-
-        txn = func(*args, **kwargs).build_transaction(txn)
-        if self.returns == 'txn':
-            return txn
-        return self.send_transaction(txn, private_key, self.returns)
-
-    return wrapper
 
 
 class Module:
@@ -98,8 +77,11 @@ class PlatonAide:
         self.transfer = Transfer(self.web3)
         self.staking = Staking(self.web3)
         self.govern = Govern(self.web3)
-        self.solidity = Solidity(self.web3)
-        self.wasm = Wasm(self.web3)
+        self.solidity = Contract(self.web3)
+
+    def set_returns(self):
+        # todo: coding
+        pass
 
     def create_account(self):
         """ 创建账户
