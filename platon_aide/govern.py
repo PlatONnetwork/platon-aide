@@ -129,6 +129,8 @@ class Govern(Module):
                         txn=None,
                         private_key=None,
                         ):
+        """ 提交取消提案
+        """
         node_id = node_id or self.node_id
         return self.web3.pip.submit_cancel_proposal(node_id, pip_number, voting_rounds, proposal_id)
 
@@ -158,7 +160,7 @@ class Govern(Module):
         """
         node_id = node_id or self.node_id
         version = version or self.version
-        version = version or self.version_sign
+        version_sign = version_sign or self.version_sign
         return self.web3.pip.vote(node_id, proposal_id, option, version, version_sign)
 
     @contract_transaction
@@ -173,26 +175,26 @@ class Govern(Module):
         """
         node_id = node_id or self.node_id
         version = version or self.version
-        version = version or self.version_sign
+        version_sign = version_sign or self.version_sign
         return self.web3.pip.declare_version(node_id, version, version_sign)
 
     def get_proposal_result(self, proposal_id):
         """ 获取提案投票结果信息
         """
-        proposal_result = self.web3.pip.get_proposal_result(proposal_id).get('Ret')
+        proposal_result = self.web3.pip.get_proposal_result(proposal_id)
         if not proposal_result:
             raise ValueError('proposal is not found.')
 
         partici_count = proposal_result['yeas'] + proposal_result['nays'] + proposal_result['abstentions']
         proposal_result['particiRatio'] = partici_count / proposal_result['accuVerifiers']
-        proposal_result['yeasRatio'] = proposal_result['yeas'] / partici_count
+        proposal_result['yeasRatio'] = proposal_result['yeas'] / partici_count if partici_count else 0
 
         return _ProposalResult(proposal_result)
 
     def get_proposal_votes(self, proposal_id, block_identifier=None):
         """ 获取提案实时投票信息
         """
-        proposal_votes = self.web3.pip.get_proposal_votes(proposal_id, block_identifier).get('Ret')
+        proposal_votes = self.web3.pip.get_proposal_votes(proposal_id, block_identifier)
         if not proposal_votes:
             raise ValueError('proposal is not found.')
 
@@ -204,14 +206,13 @@ class Govern(Module):
             'nays': proposal_votes[2],
             'abstentions': proposal_votes[3],
             'particiRatio': partici_count / proposal_votes[0],
-            'yeasRatio': proposal_votes[1] / partici_count,
+            'yeasRatio': proposal_votes[1] / partici_count if partici_count else 0,
         })
 
     def proposal_list(self, proposal_type=None):
         """ 获取提案列表，可以根据提案类型过滤
         """
-        proposal_list = self.web3.pip.proposal_list().get('Ret')
-        # todo: 没有提案时，返回字符串？
+        proposal_list = self.web3.pip.proposal_list()
         if type(proposal_list) is not list:
             raise ValueError('proposals is not found.')
 

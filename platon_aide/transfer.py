@@ -16,9 +16,11 @@ class Transfer(Module):
             "value": amount,
         }
         if txn:
-            txn = base_txn.update(txn)
+            base_txn.update(txn)
+        txn = base_txn
         if self.returns == 'txn':
             return txn
+        private_key = private_key or self.default_account.privateKey.hex()[2:]
         return self.send_transaction(txn, private_key, self.returns)
 
     @contract_transaction

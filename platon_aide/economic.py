@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 from typing import Literal
 from platon import Web3
@@ -69,7 +70,7 @@ class GenesisData:
     """
 
     def __init__(self, web3: Web3):
-        economic_config = web3.debug.economic_config()
+        economic_config = json.loads(web3.debug.economic_config())
         self.chain = _ChainData(economic_config['common'])
         self.restricting = _RestrictingData(economic_config['restricting'])
         self.staking = _StakingData(economic_config['staking'])
@@ -94,7 +95,7 @@ class Economic(Module):
     def block_time(self):
         """ 区块时长/s
         """
-        # todo: 获取区块平均时间
+        # todo: 获取区块平均时间  先放着看用例实际场景
         return int(self.genesis.chain.nodeBlockTimeWindow // self.genesis.chain.perRoundBlocks)
 
     # 窗口期
@@ -158,7 +159,7 @@ class Economic(Module):
     def increasing_time(self):
         """ 增发周期时长/m
         """
-        return self.increasing_epoch // self.epoch_time
+        return self.increasing_epoch * self.epoch_time
 
     @property
     def increasing_blocks(self):
@@ -182,7 +183,7 @@ class Economic(Module):
     def increasing_epoch(self):
         """ 增发周期结算周期数
         """
-        # todo: 修改为实时计算
+        # todo: 修改为实时计算 先放着看用例实际场景
         return (self.genesis.chain.additionalCycleTime * 60) // self.epoch_time
 
     @property
@@ -245,6 +246,9 @@ class Economic(Module):
     def get_blocks_from_miner(self, start=None, end=None, node_id=None):
         """ 获取节点出块数
         """
+        start = start or 1
+        end = end or self.web3.platon.block_number
+        node_id = node_id or self.node_id
         block_count = 0
         for bn in range(start, end):
             block = self.web3.platon.get_block(bn)
@@ -281,9 +285,9 @@ class Economic(Module):
         block_reward = Decimal(epoch_block_reward) * Decimal(block_count)
         return int(staking_reward), int(block_reward)
 
-    def _calc_staking_reward(self, node_id=None, epoch=None, verifier_count=None):
+    def __calc_staking_reward(self, node_id=None, epoch=None, verifier_count=None):
         """ 根据结算周期，计算节点在结算周期的质押奖励
-        注意：目前只能获取当前增发周期的奖励信息，无法获取历史增发周期的奖励信息
+        注意：目前只能获取历史增发周期的奖励信息，无法获取当前增发周期的奖励信息
         """
         if epoch and (not verifier_count):
             Warning('when passing in epoch, it is recommended to pass in the verifier count of the epoch.')

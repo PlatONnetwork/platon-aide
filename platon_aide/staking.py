@@ -2,7 +2,7 @@ from platon import Web3
 from platon.datastructures import AttributeDict
 
 from module import Module
-from economic import gas
+from economic import gas, Economic
 from utils import contract_transaction
 
 
@@ -44,6 +44,7 @@ class Staking(Module):
     def __init__(self, web3: Web3):
         super().__init__(web3)
         self._get_node_info()
+        self._economic = Economic(web3)
 
     @property
     def staking_info(self):
@@ -70,14 +71,14 @@ class Staking(Module):
                        txn=None,
                        private_key=None,
                        ):
-        private_key = private_key or self.default_account.private_key
+        private_key = private_key or self.default_account.privateKey.hex()[2:]
 
         benifit_address = benifit_address or \
                           self.web3.platon.account.from_key(private_key).address or \
                           self.default_account.address
 
         node_id = node_id or self.node_id
-        amount = amount or gas.STAKING_LIMIT
+        amount = amount or self._economic.staking_limit
         version = version or self.version
         version_sign = version_sign or self.version_sign
         bls_pubkey = bls_pubkey or self.bls_pubkey
@@ -96,7 +97,7 @@ class Staking(Module):
                          private_key=None,
                          ):
         node_id = node_id or self.node_id
-        amount = amount or gas.add_staking_limit
+        amount = amount or self._economic.add_staking_limit
         return self.web3.ppos.staking.increase_staking(node_id, balance_type, amount)
 
     @contract_transaction
@@ -115,6 +116,7 @@ class Staking(Module):
                        details=None,
                        ):
         node_id = node_id or self.node_id
+        benifit_address = benifit_address or self.default_account.address
         return self.web3.ppos.staking.edit_staking(node_id, benifit_address, reward_per, external_id,
                                                    node_name, website, details
                                                    )
@@ -134,8 +136,10 @@ class Staking(Module):
     def get_candidate_info(self, node_id=None):
         node_id = node_id or self.node_id
         staking_info = self.web3.ppos.staking.get_candidate_info(node_id)
-        # todo: 无质押信息，则返回None
-        return _StakingInfo(staking_info['Ret'])
+        if staking_info == 'Query candidate info failed:Candidate info is not found':
+            return None
+        else:
+            return _StakingInfo(staking_info)
 
     def get_block_reward(self):
         return self.web3.ppos.staking.get_block_reward()

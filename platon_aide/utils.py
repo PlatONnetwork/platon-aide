@@ -44,13 +44,12 @@ def contract_transaction(func):
     """
 
     @functools.wraps(func)
-    def wrapper(self, *args, txn, private_key, **kwargs):
-        private_key = private_key or self.default_account.private_key
-
+    def wrapper(self, *args, txn=None, private_key=None, **kwargs):
+        private_key = private_key or self.default_account.privateKey.hex()[2:]
         if not private_key:
             raise ValueError('arg错误')
 
-        txn = func(*args, **kwargs).build_transaction(txn)
+        txn = func(self, *args, **kwargs).build_transaction(txn)
         if self.returns == 'txn':
             return txn
         return self.send_transaction(txn, private_key, self.returns)
@@ -70,8 +69,8 @@ def contract_call(func):
 def ec_recover(block: BlockData):
     """ keccak解出区块的签名节点公钥
     """
-    extra = block.extraData[:32]
-    sign = block.extraData[32:]
+    extra = block.proofOfAuthorityData[:32]
+    sign = block.proofOfAuthorityData[32:]
     raw_data = [bytes.fromhex(remove_0x_prefix(block.parentHash.hex())),
                 to_canonical_address(block.miner),
                 bytes.fromhex(remove_0x_prefix(block.stateRoot.hex())),
@@ -83,10 +82,9 @@ def ec_recover(block: BlockData):
                 block.gasUsed,
                 block.timestamp,
                 extra,
-                bytes.fromhex(remove_0x_prefix(block.nonce))
+                bytes.fromhex(remove_0x_prefix(block.nonce.hex()))
                 ]
-    message_hash = keccak(rlp.encode(raw_data)).digest()
-    hash_bytes = HexBytes(message_hash)
+    hash_bytes = HexBytes(keccak(rlp.encode(raw_data)))
     signature_bytes = HexBytes(sign)
     signature_bytes_standard = to_standard_signature_bytes(signature_bytes)
     signature = Signature(signature_bytes=signature_bytes_standard)

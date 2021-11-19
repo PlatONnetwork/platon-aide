@@ -2,7 +2,7 @@ from platon import Web3
 
 from module import Module
 from staking import Staking
-from economic import gas
+from economic import gas, Economic
 from utils import contract_transaction
 
 
@@ -12,6 +12,7 @@ class Delegate(Module):
     def __init__(self, web3: Web3):
         super().__init__(web3)
         self._get_node_info()
+        self._economic = Economic(web3)
 
     @property
     def _staking_block_number(self):
@@ -28,7 +29,7 @@ class Delegate(Module):
                  ):
         """ 委托节点，以获取节点的奖励分红
         """
-        amount = amount or gas.Delegate_limit
+        amount = amount or self._economic.add_staking_limit
         node_id = node_id or self.node_id
         return self.web3.ppos.delegate.delegate(node_id, balance_type, amount)
 

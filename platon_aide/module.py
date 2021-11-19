@@ -1,6 +1,7 @@
 from platon import Web3
 
 from utils import send_transaction
+from platon import Account
 
 
 class Module:
@@ -8,7 +9,7 @@ class Module:
 
     def __init__(self, web3: Web3):
         self.web3 = web3
-        self.default_account = None
+        self.default_account: Account = Account()
         self.returns = 'receipt'  # 包含：txn, hash, receipt
 
     def _get_node_info(self):

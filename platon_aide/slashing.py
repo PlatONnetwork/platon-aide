@@ -19,13 +19,13 @@ class Slashing(Module):
                               ):
         return self.web3.ppos.slashing.report_duplicate_sign(report_type, data)
 
-    @contract_transaction
     def check_duplicate_sign(self,
                              report_type,
+                             block_identifier,
                              node_id=None,
-                             block_identifier=None,
                              txn=None,
                              private_key=None,
                              ):
         node_id = node_id or self.node_id
+        block_identifier = block_identifier or self.web3.platon.block_number
         return self.web3.ppos.slashing.check_duplicate_sign(report_type, node_id, block_identifier)
