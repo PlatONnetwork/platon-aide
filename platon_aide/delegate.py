@@ -1,9 +1,25 @@
+from client_sdk_python.datastructures import AttributeDict
 from platon import Web3
 
 from economic import gas, Economic
 from module import Module
 from staking import Staking
 from utils import contract_transaction
+from platon.datastructures import AttributeDict
+
+
+class _DelegateInfo(AttributeDict):
+    """ 委托信息的属性字典类
+    """
+    Addr: str
+    NodeId: str
+    StakingBlockNum: int
+    DelegateEpoch: int
+    Released: int
+    ReleasedHes: int
+    RestrictingPlan: int
+    RestrictingPlanHes: int
+    CumulativeIncome: int
 
 
 class Delegate(Module):
@@ -45,7 +61,7 @@ class Delegate(Module):
         注意：因为节点可能进行过多次质押/撤销质押，会使得委托信息遗留，因此撤回委托时必须指定节点质押区块
         """
         node_id = node_id or self.node_id
-        amount = amount or gas.Delegate_limit
+        amount = amount or self._economic.add_staking_limit
         staking_block_identifier = staking_block_identifier or self._staking_block_number
 
         return self.web3.ppos.delegate.withdrew_delegate(node_id,
@@ -66,14 +82,23 @@ class Delegate(Module):
         node_id = node_id or self.node_id
         staking_block_identifier = staking_block_identifier or self._staking_block_number
 
-        return self.web3.ppos.delegate.get_delegate_info(address, node_id, staking_block_identifier)
+        delegate_info = self.web3.ppos.delegate.get_delegate_info(address, node_id, staking_block_identifier)
+        if delegate_info == 'Query delegate info failed:Delegate info is not found':
+            return None
+        else:
+            return _DelegateInfo(delegate_info)
 
     def get_delegate_list(self, address=None):
         """ 获取地址的全部委托信息
         """
         if self.default_account:
             address = address or self.default_account.address
-        return self.web3.ppos.delegate.get_delegate_list(address)
+        # return self.web3.ppos.delegate.get_delegate_list(address)
+        delegate_list = self.web3.ppos.delegate.get_delegate_list(address)
+        if delegate_list == 'Retreiving delegation related mapping failed:RelatedList info is not found':
+            return None
+        else:
+            return [_DelegateInfo(delegate_info) for delegate_info in delegate_list]
 
     @contract_transaction
     def withdraw_delegate_reward(self,
@@ -92,4 +117,5 @@ class Delegate(Module):
         """
         if self.default_account:
             address = address or self.default_account.address
+        node_ids = node_ids or []
         return self.web3.ppos.delegate.get_delegate_reward(address, node_ids)
