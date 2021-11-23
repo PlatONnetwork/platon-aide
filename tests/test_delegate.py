@@ -10,10 +10,13 @@ def test_delegate():
     # todo: 委托地址不被允许委托，待解决
     account = aide.platon.account.create()
     address = account.address
+    print(address)
     transfer_result = aide.transfer.transfer(to_address=address, amount=aide.delegate._economic.staking_limit)
     private_key = account.privateKey.hex()[2:]
     result = aide.delegate.delegate(private_key=private_key)
-    delegate_info = aide.delegate.get_delegate_info()
+    print(result)
+    delegate_info = aide.delegate.get_delegate_info(address=address)
+    print(delegate_info)
 
 
 def test_withdrew_delegate():

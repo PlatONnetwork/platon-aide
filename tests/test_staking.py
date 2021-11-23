@@ -13,7 +13,7 @@ def test_staking_info():
 
 
 def test_create_staking():
-    aide.staking.set_default_account(account)
+    # aide.staking.set_default_account(account)
     result = aide.staking.create_staking(
                        amount=None,
                        balance_type=0,
@@ -35,6 +35,34 @@ def test_create_staking():
     assert staking_info.Status == 0
     assert staking_info.NodeId == aide.staking.node_id
     assert staking_info.Shares == aide.staking._economic.staking_limit
+
+def test_create_staking_noprivate_key():
+    account = aide.platon.account.create()
+    address = account.address
+    transfer_result = aide.transfer.transfer(to_address=address, amount=aide.delegate._economic.staking_limit * 2)
+    private_key = account.privateKey.hex()[2:]
+    result = aide.staking.create_staking(
+        amount=None,
+        balance_type=0,
+        node_id=None,
+        benifit_address=None,
+        node_name='',
+        external_id='',
+        details='',
+        website='',
+        reward_per=0,
+        version=None,
+        version_sign=None,
+        bls_pubkey=None,
+        bls_proof=None,
+        txn=None,
+        private_key=private_key)
+    assert result['status'] == 1
+    staking_info = aide.staking.get_candidate_info()
+    assert staking_info.Status == 0
+    assert staking_info.NodeId == aide.staking.node_id
+    assert staking_info.Shares == aide.staking._economic.staking_limit
+    assert staking_info.StakingAddress == address
 
 
 def test_increase_staking():
