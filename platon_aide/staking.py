@@ -118,7 +118,6 @@ class Staking(Module):
                        private_key=None,
                        ):
         node_id = node_id or self.node_id
-        benifit_address = benifit_address or self.default_account.address
         return self.web3.ppos.staking.edit_staking(node_id, benifit_address, reward_per, external_id,
                                                    node_name, website, details
                                                    )
