@@ -1,4 +1,5 @@
 from time import time
+
 from platon import Web3
 from platon.datastructures import AttributeDict
 

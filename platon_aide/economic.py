@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal
 from typing import Literal
+
 from platon import Web3
 from platon.datastructures import AttributeDict
 

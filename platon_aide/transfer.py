@@ -1,5 +1,5 @@
-from module import Module
 from economic import gas
+from module import Module
 from utils import contract_transaction
 
 

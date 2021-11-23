@@ -1,8 +1,8 @@
 from platon import Web3
 
+from economic import gas, Economic
 from module import Module
 from staking import Staking
-from economic import gas, Economic
 from utils import contract_transaction
 
 

@@ -16,6 +16,7 @@ def test_report_duplicate_sign():
                             )
     assert result['status'] == 1
 
+
 def test_check_duplicate_sign():
     report_type = 1
     node_id = 'e9ee916797e66c3e10eb272956525f62ac8f9b9b74af05a5b021c7b23d7b740359c62912fe5e7fef66f2a3f5358bc7d8c1af7d862269ed5db27b5cbcf9820ec8'

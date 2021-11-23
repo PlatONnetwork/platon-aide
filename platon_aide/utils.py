@@ -1,8 +1,10 @@
 import functools
+
 import rlp
 from hexbytes import HexBytes
 from platon import Web3
 from platon.types import BlockData
+from platon_account import Account
 from platon_account._utils.signing import to_standard_signature_bytes
 from platon_hash.auto import keccak
 from platon_keys.datatypes import Signature
@@ -42,13 +44,18 @@ def contract_transaction(func):
     包装类，用于在调用Module及其子类的方法时，自定义要返回的结果
     可以返回未发送的交易dict、交易hash、交易回执
     """
-
     @functools.wraps(func)
     def wrapper(self, *args, txn=None, private_key=None, **kwargs):
-        private_key = private_key or self.default_account.private_key
+        private_key = private_key or self.default_account.privateKey
 
         if not private_key:
             raise ValueError('private key is required.')
+
+        account = Account.from_key(private_key)
+        if not txn:
+            txn = {'from': account.address}
+        if not txn.get('from'):
+            txn['from'] = account.address
 
         txn = func(self, *args, **kwargs).build_transaction(txn)
         if self.returns == 'txn':

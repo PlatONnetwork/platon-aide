@@ -1,8 +1,8 @@
 from platon import Web3
 from platon.datastructures import AttributeDict
 
+from economic import Economic
 from module import Module
-from economic import gas, Economic
 from utils import contract_transaction
 
 

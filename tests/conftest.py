@@ -1,18 +1,15 @@
 import pytest
-
-from module import Module
-from platon_aide.main import PlatonAide
 from platon import Account
 
-consensus_uri = 'http://192.168.16.121:6789'
-uri = 'http://192.168.16.121:6790'
-consensus_aide = PlatonAide(consensus_uri)
-aide = PlatonAide(uri, chain_id=100)
+from platon_aide.main import PlatonAide
 
-account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa',
-                             hrp='lat')
+consensus_uri = 'http://192.168.16.121:6789'
+consensus_aide = PlatonAide(consensus_uri)
+
+uri = 'http://192.168.16.121:6790'
+aide = PlatonAide(uri)
+account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa', hrp='lat')
 aide.set_default_account(account)
-module = Module(aide.web3)
 
 
 @pytest.fixture()

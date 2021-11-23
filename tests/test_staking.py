@@ -15,26 +15,28 @@ def test_staking_info():
 def test_create_staking():
     # aide.staking.set_default_account(account)
     result = aide.staking.create_staking(
-                       amount=None,
-                       balance_type=0,
-                       node_id=None,
-                       benifit_address=None,
-                       node_name='',
-                       external_id='',
-                       details='',
-                       website='',
-                       reward_per=0,
-                       version=None,
-                       version_sign=None,
-                       bls_pubkey=None,
-                       bls_proof=None,
-                       txn=None,
-                       private_key=None)
+        amount=None,
+        balance_type=0,
+        node_id=None,
+        benifit_address=None,
+        node_name='',
+        external_id='',
+        details='',
+        website='',
+        reward_per=0,
+        version=None,
+        version_sign=None,
+        bls_pubkey=None,
+        bls_proof=None,
+        txn=None,
+        private_key=None
+    )
     assert result['status'] == 1
     staking_info = aide.staking.get_candidate_info()
     assert staking_info.Status == 0
     assert staking_info.NodeId == aide.staking.node_id
     assert staking_info.Shares == aide.staking._economic.staking_limit
+
 
 def test_create_staking_noprivate_key():
     account = aide.platon.account.create()
@@ -56,7 +58,8 @@ def test_create_staking_noprivate_key():
         bls_pubkey=None,
         bls_proof=None,
         txn=None,
-        private_key=private_key)
+        private_key=private_key
+    )
     assert result['status'] == 1
     staking_info = aide.staking.get_candidate_info()
     assert staking_info.Status == 0
@@ -67,19 +70,19 @@ def test_create_staking_noprivate_key():
 
 def test_increase_staking():
     block_number = aide.platon.block_number
-    aide.wait_block(block_number+160)
+    aide.wait_block(block_number + 160)
     account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa', hrp='lat')
     aide.staking.set_default_account(account)
     result = aide.staking.increase_staking(
-                         balance_type=0,
-                         node_id=None,
-                         amount=None,
-                         txn=None,
-                         private_key=None)
+        balance_type=0,
+        node_id=None,
+        amount=None,
+        txn=None,
+        private_key=None
+    )
     assert result['status'] == 1
     staking_info = aide.staking.get_candidate_info()
     assert staking_info.ReleasedHes == aide.staking._economic.add_staking_limit
-
 
 
 def test_edit_candidate():
@@ -91,6 +94,7 @@ def test_edit_candidate():
     result = aide.staking.edit_candidate(node_name=node_name)
     staking_info = aide.staking.get_candidate_info()
     assert staking_info.NodeName == node_name
+
 
 def test_withdrew_staking():
     result = aide.staking.withdrew_staking()
@@ -104,6 +108,7 @@ def test_get_verifier_list():
     verifier_list = aide.staking.get_verifier_list()
     assert 4 <= len(verifier_list) <= 5
     assert verifier_list[0].NodeId
+
 
 def test_get_validator_list():
     validator_list = aide.staking.get_validator_list()
@@ -131,6 +136,7 @@ def test_get_block_reward():
 def test_get_staking_reward():
     staking_reward = aide.staking.get_staking_reward()
     assert isinstance(staking_reward, int)
+
 
 def test_get_avg_block_time():
     avg_block_time = aide.staking.get_avg_block_time()

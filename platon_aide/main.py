@@ -1,11 +1,12 @@
 import time
+
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon.middleware import gplaton_poa_middleware
 
-from economic import Economic
-from delegate import Delegate
-from govern import Govern
 from contract import Contract
+from delegate import Delegate
+from economic import Economic
+from govern import Govern
 from slashing import Slashing
 from staking import Staking
 from transfer import Transfer

@@ -6,6 +6,7 @@ def test_main():
     assert aide.hrp == 'lat'
     assert aide.chain_id == 100
 
+
 def test_set_returns():
     aide.set_returns('receipt')
     address = aide.platon.account.create().address
@@ -32,7 +33,6 @@ def test_create_account():
 def test_create_hd_account():
     aide.create_hd_account()
     pass
-
 
 
 def test_wait_block():
