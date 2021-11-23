@@ -95,7 +95,7 @@ class Economic(Module):
     def block_time(self):
         """ 区块时长/s
         """
-        # todo: 获取区块平均时间  先放着看用例实际场景
+        # todo: 获取区块平均时间
         return int(self.genesis.chain.nodeBlockTimeWindow // self.genesis.chain.perRoundBlocks)
 
     # 窗口期
@@ -183,7 +183,7 @@ class Economic(Module):
     def increasing_epoch(self):
         """ 增发周期结算周期数
         """
-        # todo: 修改为实时计算 先放着看用例实际场景
+        # todo: 修改为实时计算
         return (self.genesis.chain.additionalCycleTime * 60) // self.epoch_time
 
     @property
@@ -246,9 +246,6 @@ class Economic(Module):
     def get_blocks_from_miner(self, start=None, end=None, node_id=None):
         """ 获取节点出块数
         """
-        start = start or 1
-        end = end or self.web3.platon.block_number
-        node_id = node_id or self.node_id
         block_count = 0
         for bn in range(start, end):
             block = self.web3.platon.get_block(bn)
@@ -285,30 +282,30 @@ class Economic(Module):
         block_reward = Decimal(epoch_block_reward) * Decimal(block_count)
         return int(staking_reward), int(block_reward)
 
-    def __calc_staking_reward(self, node_id=None, epoch=None, verifier_count=None):
-        """ 根据结算周期，计算节点在结算周期的质押奖励
-        注意：目前只能获取历史增发周期的奖励信息，无法获取当前增发周期的奖励信息
-        """
-        if epoch and (not verifier_count):
-            Warning('when passing in epoch, it is recommended to pass in the verifier count of the epoch.')
-
-        node_id = node_id or self.node_id
-        if not epoch:
-            epoch, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
-
-        epoch_staking_reward, epoch_block_reward = self.get_rewards_from_epoch(epoch)
-
-        if not verifier_count:
-            verifier_count = self.get_verifier_count(epoch)
-
-        start_bn, end_bn = (epoch - 1) * self.epoch_blocks + 1, epoch * self.epoch_blocks
-        block_count = self.get_blocks_from_miner(start_bn, end_bn, node_id=node_id)
-
-        return self.calc_staking_reward(epoch_staking_reward,
-                                        epoch_block_reward,
-                                        verifier_count,
-                                        block_count,
-                                        )
+    # def __calc_staking_reward(self, node_id=None, epoch=None, verifier_count=None):
+    #     """ 根据结算周期，计算节点在结算周期的质押奖励
+    #     注意：因底层实现逻辑原因，本方法预期功能未能实现，请勿使用
+    #     """
+    #     if epoch and (not verifier_count):
+    #         Warning('when passing in epoch, it is recommended to pass in the verifier count of the epoch.')
+    #
+    #     node_id = node_id or self.node_id
+    #     if not epoch:
+    #         epoch, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
+    #
+    #     epoch_staking_reward, epoch_block_reward = self.get_rewards_from_epoch(epoch)
+    #
+    #     if not verifier_count:
+    #         verifier_count = self.get_verifier_count(epoch)
+    #
+    #     start_bn, end_bn = (epoch - 1) * self.epoch_blocks + 1, epoch * self.epoch_blocks
+    #     block_count = self.get_blocks_from_miner(start_bn, end_bn, node_id=node_id)
+    #
+    #     return self.calc_staking_reward(epoch_staking_reward,
+    #                                     epoch_block_reward,
+    #                                     verifier_count,
+    #                                     block_count,
+    #                                     )
 
     @staticmethod
     def calc_delegate_reward(total_node_reward,

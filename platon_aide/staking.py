@@ -114,6 +114,8 @@ class Staking(Module):
                        node_name=None,
                        website=None,
                        details=None,
+                       txn=None,
+                       private_key=None,
                        ):
         node_id = node_id or self.node_id
         benifit_address = benifit_address or self.default_account.address

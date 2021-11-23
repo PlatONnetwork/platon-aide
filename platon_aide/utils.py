@@ -45,9 +45,10 @@ def contract_transaction(func):
 
     @functools.wraps(func)
     def wrapper(self, *args, txn=None, private_key=None, **kwargs):
-        private_key = private_key or self.default_account.privateKey.hex()[2:]
+        private_key = private_key or self.default_account.private_key
+
         if not private_key:
-            raise ValueError('arg错误')
+            raise ValueError('private key is required.')
 
         txn = func(self, *args, **kwargs).build_transaction(txn)
         if self.returns == 'txn':
@@ -61,7 +62,7 @@ def contract_call(func):
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-        return func(*args, **kwargs).call()
+        return func(self, *args, **kwargs).call()
 
     return wrapper
 

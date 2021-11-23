@@ -6,7 +6,6 @@ from economic import gas, Economic
 from utils import contract_transaction
 
 
-
 class Delegate(Module):
 
     def __init__(self, web3: Web3):

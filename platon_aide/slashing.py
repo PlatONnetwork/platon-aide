@@ -23,9 +23,6 @@ class Slashing(Module):
                              report_type,
                              block_identifier,
                              node_id=None,
-                             txn=None,
-                             private_key=None,
                              ):
         node_id = node_id or self.node_id
-        block_identifier = block_identifier or self.web3.platon.block_number
         return self.web3.ppos.slashing.check_duplicate_sign(report_type, node_id, block_identifier)

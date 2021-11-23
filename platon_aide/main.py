@@ -2,11 +2,10 @@ import time
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon.middleware import gplaton_poa_middleware
 
+from economic import Economic
 from delegate import Delegate
-from economic import gas, Economic
 from govern import Govern
 from contract import Contract
-from module import Module
 from slashing import Slashing
 from staking import Staking
 from transfer import Transfer
@@ -44,22 +43,31 @@ class PlatonAide:
         self.personal = self.web3.node.personal
         self.txpool = self.web3.node.txpool
         self.debug = self.web3.debug
-        # self.economic = gas
         self.economic = Economic(self.web3)
         self.transfer = Transfer(self.web3)
         self.staking = Staking(self.web3)
-        self.govern = Govern(self.web3)
-        self.solidity = Contract(self.web3)
         self.delegate = Delegate(self.web3)
         self.slashing = Slashing(self.web3)
+        self.govern = Govern(self.web3)
+        self.contract = Contract(self.web3)
+
+    def set_default_account(self, account):
+        """ 设置默认账户
+        """
+        self.transfer.set_default_account(account)
+        self.staking.set_default_account(account)
+        self.delegate.set_default_account(account)
+        self.slashing.set_default_account(account)
+        self.govern.set_default_account(account)
+        self.contract.set_default_account(account)
 
     def set_returns(self, returns):
         self.transfer.set_returns(returns)
         self.staking.set_returns(returns)
-        self.govern.set_returns(returns)
-        # self.solidity.set_returns(returns)
         self.delegate.set_returns(returns)
         self.slashing.set_returns(returns)
+        self.govern.set_returns(returns)
+        self.contract.set_returns(returns)
 
     def create_account(self):
         """ 创建账户
@@ -72,7 +80,7 @@ class PlatonAide:
     def create_hd_account(self):
         """ 创建HD账户
         """
-        # todo: coding  初版先不用写这个
+        # todo: coding
         pass
 
     def send_transaction(self, txn, private_key, returns='receipt'):
@@ -93,14 +101,3 @@ class PlatonAide:
         """
         block = self.web3.platon.get_block(block_identifier)
         return ec_recover(block)
-
-    def set_default_account(self, account):
-
-        """ 设置默认账户
-        """
-        self.transfer.set_default_account(account)
-        self.staking.set_default_account(account)
-        self.govern.set_default_account(account)
-        # self.solidity.set_default_account(account)
-        self.delegate.set_default_account(account)
-        self.slashing.set_default_account(account)
