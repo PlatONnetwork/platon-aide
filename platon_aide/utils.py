@@ -45,13 +45,12 @@ def contract_transaction(func):
     可以返回未发送的交易dict、交易hash、交易回执
     """
     @functools.wraps(func)
-    def wrapper(self, *args, txn=None, private_key=None, **kwargs):
+    def wrapper(self, txn=None, private_key=None, *args, **kwargs):
         private_key = private_key or self.default_account.privateKey
-
         if not private_key:
             raise ValueError('private key is required.')
 
-        account = Account.from_key(private_key)
+        account = Account.from_key(private_key, self.web3.hrp)
         if not txn:
             txn = {'from': account.address}
         if not txn.get('from'):

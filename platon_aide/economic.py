@@ -63,7 +63,7 @@ class _RestrictingData(AttributeDict):
 class _GasData:
     transferGas: int = 21000
     restrictingGas: int = 100000
-    governGasPrice: int = 2100000
+    governGasPrice: int = 2100000000000000
 
 
 class GenesisData:
