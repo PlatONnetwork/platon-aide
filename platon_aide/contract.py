@@ -14,17 +14,36 @@ class Contract(Module):
                  abi,
                  bytecode=None,
                  address=None,
-                 vm_type: Literal['eth', 'wasm'] = 'eth',
+                 vm_type: Literal['solidity', 'wasm'] = 'solidity',
                  ):
         self.abi = abi
         self.bytecode = bytecode
+        self.vm_type = vm_type
+        self.__build_contract(address)
+
+    def __build_contract(self, address):
+        self.contract = self.web3.platon.contract(address=address, abi=self.abi, bytecode=self.bytecode, vm_type=self.vm_type)
         self.address = address
-        self.contract = self.web3.platon.contract(address=address, abi=abi, bytecode=bytecode, vm_type=vm_type)
         self.functions = self.contract.functions
         self.events = self.contract.events
         self._set_functions(self.contract.functions)
         self._set_events(self.contract.events)
         self._set_fallback(self.contract.fallback)
+
+    def deploy(self, txn=None, private_key=None, *args, **kwargs):
+        if self.address:
+            raise ValueError('contract address already exists.')
+
+        private_key = private_key or self.default_account.privateKey
+        if not private_key:
+            raise ValueError('private key is required.')
+
+        txn = self.contract.constructor(*args, **kwargs).build_transaction(txn)
+
+        receipt = self.send_transaction(txn, private_key)
+        self.__build_contract(address=receipt['contractAddress'])
+
+        return self
 
     def _set_functions(self, functions):
         for func in functions:
