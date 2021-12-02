@@ -3,14 +3,14 @@ import time
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon.middleware import gplaton_poa_middleware
 
-from contract import Contract
-from delegate import Delegate
-from economic import Economic
-from govern import Govern
-from slashing import Slashing
-from staking import Staking
-from transfer import Transfer
-from utils import send_transaction, ec_recover
+from platon_aide.contract import Contract
+from platon_aide.delegate import Delegate
+from platon_aide.economic import Economic
+from platon_aide.govern import Govern
+from platon_aide.slashing import Slashing
+from platon_aide.staking import Staking
+from platon_aide.transfer import Transfer
+from platon_aide.utils import send_transaction, ec_recover
 
 
 def get_web3(uri, chain_id=None, hrp=None):

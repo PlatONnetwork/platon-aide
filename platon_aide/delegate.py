@@ -1,11 +1,11 @@
-from client_sdk_python.datastructures import AttributeDict
 from platon import Web3
-
-from economic import gas, Economic
-from module import Module
-from staking import Staking
-from utils import contract_transaction
 from platon.datastructures import AttributeDict
+
+from platon_aide.economic import gas, Economic
+from platon_aide.module import Module
+from platon_aide.staking import Staking
+from platon_aide.utils import contract_transaction
+
 
 
 class _DelegateInfo(AttributeDict):

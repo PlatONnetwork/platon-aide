@@ -1,9 +1,9 @@
 from platon import Web3
 from platon.datastructures import AttributeDict
 
-from economic import Economic
-from module import Module
-from utils import contract_transaction
+from platon_aide.economic import Economic
+from platon_aide.module import Module
+from platon_aide.utils import contract_transaction
 
 
 class _StakingInfo(AttributeDict):

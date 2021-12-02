@@ -5,8 +5,8 @@ from typing import Literal
 from platon import Web3
 from platon.datastructures import AttributeDict
 
-from module import Module
-from utils import ec_recover
+from platon_aide.module import Module
+from platon_aide.utils import ec_recover
 
 
 class _ChainData(AttributeDict):

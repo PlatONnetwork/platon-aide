@@ -4,8 +4,8 @@ from typing import Literal
 from platon._utils.abi import filter_by_name
 from platon.contract import ContractFunction
 
-from module import Module
-from utils import contract_call, contract_transaction
+from platon_aide.module import Module
+from platon_aide.utils import contract_call, contract_transaction
 
 
 class Contract(Module):
