@@ -1,8 +1,8 @@
 import functools
-
 import rlp
 from hexbytes import HexBytes
-from platon import Web3
+
+from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon.types import BlockData
 from platon_account import Account
 from platon_account._utils.signing import to_standard_signature_bytes
@@ -10,6 +10,37 @@ from platon_hash.auto import keccak
 from platon_keys.datatypes import Signature
 from platon_typing import HexStr
 from platon_utils import remove_0x_prefix, to_canonical_address
+from gql import Client
+from gql.transport.aiohttp import AIOHTTPTransport
+from gql.transport.websockets import WebsocketsTransport
+
+
+def get_web3(uri, chain_id=None, hrp=None):
+    """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
+    """
+    if uri.startswith('http'):
+        provider = HTTPProvider
+    elif uri.startswith('ws'):
+        provider = WebsocketProvider
+    elif uri.startswith('ipc'):
+        provider = IPCProvider
+    else:
+        raise ValueError(f'unidentifiable uri {uri}')
+
+    return Web3(provider(uri), chain_id=chain_id, hrp=hrp)
+
+
+def get_gql(uri):
+    """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
+    """
+    if uri.startswith('http'):
+        transport = AIOHTTPTransport
+    elif uri.startswith('ws'):
+        transport = WebsocketsTransport
+    else:
+        raise ValueError(f'unidentifiable uri {uri}')
+
+    return Client(transport=transport(uri), fetch_schema_from_transport=True)
 
 
 def send_transaction(web3: Web3, txn: dict, private_key: str, returns='receipt'):
@@ -39,11 +70,20 @@ def send_transaction(web3: Web3, txn: dict, private_key: str, returns='receipt')
     return receipt
 
 
+def contract_call(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        return func(self, *args, **kwargs).call()
+
+    return wrapper
+
+
 def contract_transaction(func):
     """
     包装类，用于在调用Module及其子类的方法时，自定义要返回的结果
     可以返回未发送的交易dict、交易hash、交易回执
     """
+
     @functools.wraps(func)
     def wrapper(self, txn=None, private_key=None, *args, **kwargs):
         private_key = private_key or self.default_account.privateKey
@@ -60,15 +100,6 @@ def contract_transaction(func):
         if self.returns == 'txn':
             return txn
         return self.send_transaction(txn, private_key, self.returns)
-
-    return wrapper
-
-
-def contract_call(func):
-
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
-        return func(self, *args, **kwargs).call()
 
     return wrapper
 

@@ -1,10 +1,5 @@
 import time
 
-from gql import Client
-from gql.transport.aiohttp import AIOHTTPTransport
-from gql.transport.websockets import WebsocketsTransport
-
-from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon.middleware import gplaton_poa_middleware
 
 from platon_aide.contract import Contract
@@ -14,35 +9,8 @@ from platon_aide.govern import Govern
 from platon_aide.slashing import Slashing
 from platon_aide.staking import Staking
 from platon_aide.transfer import Transfer
-from platon_aide.utils import send_transaction, ec_recover
-
-
-def get_web3(uri, chain_id=None, hrp=None):
-    """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
-    """
-    if uri.startswith('http'):
-        provider = HTTPProvider
-    elif uri.startswith('ws'):
-        provider = WebsocketProvider
-    elif uri.startswith('ipc'):
-        provider = IPCProvider
-    else:
-        raise ValueError(f'unidentifiable uri {uri}')
-
-    return Web3(provider(uri), chain_id=chain_id, hrp=hrp)
-
-
-def get_gql(uri):
-    """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
-    """
-    if uri.startswith('http'):
-        transport = AIOHTTPTransport
-    elif uri.startswith('ws'):
-        transport = WebsocketsTransport
-    else:
-        raise ValueError(f'unidentifiable uri {uri}')
-
-    return Client(transport=transport(uri), fetch_schema_from_transport=True)
+from platon_aide.graphic import Graphql
+from platon_aide.utils import get_web3, send_transaction, ec_recover
 
 
 class PlatonAide:
@@ -51,8 +19,8 @@ class PlatonAide:
 
     def __init__(self, uri: str, gql_uri: str = None, chain_id: int = None, hrp: str = None):
         self.uri = uri
+        self.gql_uri = gql_uri
         self.web3 = get_web3(uri, chain_id, hrp)
-        self.gql = get_gql(gql_uri) if gql_uri else None
         self.web3.middleware_onion.inject(gplaton_poa_middleware, layer=0)
         self.hrp = hrp or self.web3.hrp
         self.chain_id = chain_id or self.web3.platon.chain_id
@@ -69,6 +37,7 @@ class PlatonAide:
         self.slashing = Slashing(self.web3)
         self.govern = Govern(self.web3)
         self.contract = Contract(self.web3)
+        self.graphql = Graphql(self.gql_uri, self.web3)
 
     def set_default_account(self, account):
         """ 设置默认账户
