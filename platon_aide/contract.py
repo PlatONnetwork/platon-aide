@@ -51,6 +51,7 @@ class Contract(Module):
             setattr(self, func, warp_function)
 
     def _set_events(self, events):
+        # todo: 处理event和function重名问题
         for event in events:
             # 通过方法名获取方法
             warp_event = self._event_wrap(event)

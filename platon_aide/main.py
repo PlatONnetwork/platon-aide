@@ -1,5 +1,9 @@
 import time
 
+from gql import Client
+from gql.transport.aiohttp import AIOHTTPTransport
+from gql.transport.websockets import WebsocketsTransport
+
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon.middleware import gplaton_poa_middleware
 
@@ -28,13 +32,27 @@ def get_web3(uri, chain_id=None, hrp=None):
     return Web3(provider(uri), chain_id=chain_id, hrp=hrp)
 
 
+def get_gql(uri):
+    """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
+    """
+    if uri.startswith('http'):
+        transport = AIOHTTPTransport
+    elif uri.startswith('ws'):
+        transport = WebsocketsTransport
+    else:
+        raise ValueError(f'unidentifiable uri {uri}')
+
+    return Client(transport=transport(uri), fetch_schema_from_transport=True)
+
+
 class PlatonAide:
     """ 主类，platon各个子模块的集合体，同时支持创建账户、解码等非交易类的操作
     """
 
-    def __init__(self, uri: str, chain_id: int = None, hrp: str = None):
+    def __init__(self, uri: str, gql_uri: str = None, chain_id: int = None, hrp: str = None):
         self.uri = uri
         self.web3 = get_web3(uri, chain_id, hrp)
+        self.gql = get_gql(gql_uri) if gql_uri else None
         self.web3.middleware_onion.inject(gplaton_poa_middleware, layer=0)
         self.hrp = hrp or self.web3.hrp
         self.chain_id = chain_id or self.web3.platon.chain_id
