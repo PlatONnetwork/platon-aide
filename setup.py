@@ -13,7 +13,7 @@ deps = {
         'platon_typing>=2.2.3',
         'platon_utils>=1.10.0',
         'rlp>=1.2.0',
-        'gql>=3.0.0',
+        'gql>=3.0.0rc0',
     ]
 }
 
@@ -23,7 +23,7 @@ with open('./README.md', encoding='utf-8') as readme:
 setup(
     name='platon-aide',
     # *IMPORTANT*: Don't manually change the version here. Use the 'bumpversion' utility.
-    version='1.1.0',
+    version='1.1.3',
     description="""An aide that helps you quickly access the platon chain and use its basic functions.""",
     long_description=long_description,
     long_description_content_type='text/markdown',
