@@ -3,6 +3,8 @@ import rlp
 from hexbytes import HexBytes
 
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
+from platon._utils.inner_contract import InnerContractEvent
+from platon._utils.threads import Timeout
 from platon.types import BlockData
 from platon_account import Account
 from platon_account._utils.signing import to_standard_signature_bytes
@@ -15,7 +17,7 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.websockets import WebsocketsTransport
 
 
-def get_web3(uri, chain_id=None, hrp=None):
+def get_web3(uri, chain_id=None, hrp=None, timeout=10):
     """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
     """
     if uri.startswith('http'):
@@ -27,11 +29,19 @@ def get_web3(uri, chain_id=None, hrp=None):
     else:
         raise ValueError(f'unidentifiable uri {uri}')
 
-    return Web3(provider(uri), chain_id=chain_id, hrp=hrp)
+    with Timeout(timeout) as t:
+        while True:
+            web3 = Web3(provider(uri), chain_id=chain_id, hrp=hrp)
+            if web3.isConnected():
+                break
+            t.sleep(2)
+
+    return web3
 
 
 def get_gql(uri):
     """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
+    # todo: 增加超时处理
     """
     if uri.startswith('http'):
         transport = AIOHTTPTransport
@@ -54,6 +64,7 @@ def send_transaction(web3: Web3, txn: dict, private_key: str, returns='receipt')
         returns: 指定要返回的结果，取值如下：
                 - 'hash': 返回交易哈希
                 - 'receipt': 返回交易回执
+                - 'ic-event': 返回内置合约的event内容
     """
     if not txn.get('nonce'):
         account = web3.platon.account.from_key(private_key, hrp=web3.hrp)
@@ -64,10 +75,15 @@ def send_transaction(web3: Web3, txn: dict, private_key: str, returns='receipt')
     tx_hash = web3.platon.send_raw_transaction(signed_txn.rawTransaction)
     if returns == 'hash':
         return bytes(tx_hash).hex()
+
     receipt = web3.platon.wait_for_transaction_receipt(tx_hash)
     if type(receipt) is bytes:
         receipt = receipt.decode('utf-8')
-    return receipt
+    if returns == 'receipt':
+        return receipt
+
+    if returns == 'ic-event':
+        return InnerContractEvent.get_event(receipt)
 
 
 def contract_call(func):

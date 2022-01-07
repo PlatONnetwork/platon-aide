@@ -10,7 +10,7 @@ class Module:
     def __init__(self, web3: Web3):
         self.web3 = web3
         self.default_account: Account = None
-        self.returns = 'receipt'  # 包含：txn, hash, receipt
+        self.returns = 'receipt'  # 包含：txn, hash, receipt, ic-event(仅内置合约可用)
 
     def _get_node_info(self):
         node_info = self.web3.node.admin.node_info()

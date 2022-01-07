@@ -8,6 +8,7 @@ class Slashing(Module):
 
     def __init__(self, web3: Web3):
         super().__init__(web3)
+        self.returns = 'ic-event'
         self._get_node_info()
 
     @contract_transaction

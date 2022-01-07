@@ -1,9 +1,15 @@
+from platon import Web3
+
 from platon_aide.economic import gas
 from platon_aide.module import Module
 from platon_aide.utils import contract_transaction
 
 
 class Transfer(Module):
+
+    def __init__(self, web3: Web3):
+        super().__init__(web3)
+        self.returns = 'ic-event'
 
     # 转账交易
     def transfer(self, to_address, amount, txn=None, private_key=None):
