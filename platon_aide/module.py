@@ -14,7 +14,8 @@ class Module:
 
     def _get_node_info(self):
         node_info = self.web3.node.admin.node_info()
-        self.node_id = node_info['id']
+        # self.node_id = node_info['id']
+        self.node_id = node_info['enode'].split('//')[1].split('@')[0]
         self.bls_pubkey = node_info['blsPubKey']
         self.bls_proof = self.web3.node.admin.get_schnorr_NIZK_prove()
         version_info = self.web3.node.admin.get_program_version()

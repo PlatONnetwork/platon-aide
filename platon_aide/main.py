@@ -37,7 +37,7 @@ class PlatonAide:
         self.slashing = Slashing(self.web3)
         self.govern = Govern(self.web3)
         self.contract = Contract(self.web3)
-        self.graphql = Graphql(self.gql_uri, self.web3)
+        self.graphql = Graphql(self.gql_uri, self.web3) if self.gql_uri else None
 
     def set_default_account(self, account):
         """ 设置默认账户

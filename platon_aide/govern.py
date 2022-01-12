@@ -193,7 +193,7 @@ class Govern(Module):
 
         return _ProposalResult(proposal_result)
 
-    def get_proposal_votes(self, proposal_id, block_identifier=None):
+    def get_proposal_votes(self, proposal_id, block_identifier='latest'):
         """ 获取提案实时投票信息
         """
         proposal_votes = self.web3.pip.get_proposal_votes(proposal_id, block_identifier)

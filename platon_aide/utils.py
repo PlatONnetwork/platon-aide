@@ -101,7 +101,7 @@ def contract_transaction(func):
     """
 
     @functools.wraps(func)
-    def wrapper(self, txn=None, private_key=None, *args, **kwargs):
+    def wrapper(self, *args, txn=None, private_key=None, **kwargs):
         private_key = private_key or self.default_account.privateKey
         if not private_key:
             raise ValueError('private key is required.')

@@ -73,7 +73,7 @@ class GenesisData:
     def __init__(self, web3: Web3):
         economic_config = json.loads(web3.debug.economic_config())
         self.chain = _ChainData(economic_config['common'])
-        self.restricting = _RestrictingData(economic_config['restricting'])
+        self.restricting = _RestrictingData(economic_config.get('restricting')) if economic_config.get('restricting') else None
         self.staking = _StakingData(economic_config['staking'])
         self.govern = _GovernData(economic_config['gov'])
         self.reward = _RewardData(economic_config['reward'])
