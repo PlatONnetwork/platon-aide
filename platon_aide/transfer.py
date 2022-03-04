@@ -9,9 +9,10 @@ class Transfer(Module):
 
     def __init__(self, web3: Web3):
         super().__init__(web3)
-        self.returns = 'ic-event'
+        self.returns = 'receipt'
 
     # 转账交易
+    # todo: 交易不支持返回类型为ic-event
     def transfer(self, to_address, amount, txn=None, private_key=None):
         base_txn = {
             "to": to_address,

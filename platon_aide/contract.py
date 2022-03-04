@@ -1,57 +1,83 @@
-from functools import wraps
+from functools import wraps, partial
 from typing import Literal
 
 from platon._utils.abi import filter_by_name
 from platon.contract import ContractFunction
+from platon.types import ABI
+from platon_typing import HexStr, AnyAddress
 
 from platon_aide.module import Module
 from platon_aide.utils import contract_call, contract_transaction
 
 
 class Contract(Module):
+    abi: ABI = None
+    bytecode: HexStr = None
+    address: AnyAddress = None
+    vm_type: str = None
 
-    def __call__(self,
-                 abi,
-                 bytecode=None,
-                 address=None,
-                 vm_type: Literal['solidity', 'wasm'] = 'solidity',
-                 ):
-        self.abi = abi
-        self.bytecode = bytecode
-        self.vm_type = vm_type
-        self.__build_contract(address)
+    def init(self,
+             abi,
+             bytecode=None,
+             address=None,
+             vm_type: Literal['solidity', 'wasm'] = 'solidity',
+             ):
+        self.__build_contract(abi, bytecode, address, vm_type)
+        return self
 
-    def __build_contract(self, address):
-        self.contract = self.web3.platon.contract(address=address, abi=self.abi, bytecode=self.bytecode, vm_type=self.vm_type)
-        self.address = address
-        self.functions = self.contract.functions
-        self.events = self.contract.events
-        self._set_functions(self.contract.functions)
-        self._set_events(self.contract.events)
-        self._set_fallback(self.contract.fallback)
-
-    def deploy(self, txn=None, private_key=None, *args, **kwargs):
+    def deploy(self,
+               abi,
+               bytecode,
+               vm_type: Literal['solidity', 'wasm'] = 'solidity',
+               txn=None,
+               private_key=None,
+               *init_args,
+               **init_kwargs):
         if self.address:
-            raise ValueError('contract address already exists.')
+            raise Warning(f'contract {self.address} already exists, it will be replaced.')
 
         private_key = private_key or self.default_account.privateKey
         if not private_key:
             raise ValueError('private key is required.')
 
-        txn = self.contract.constructor(*args, **kwargs).build_transaction(txn)
+        _temp_origin = self.web3.platon.contract(abi=abi, bytecode=bytecode, vm_type=vm_type)
+        txn = _temp_origin.constructor(*init_args, **init_kwargs).build_transaction(txn)
 
         receipt = self.send_transaction(txn, private_key)
-        self.__build_contract(address=receipt['contractAddress'])
+        address = receipt.get('contractAddress')
+
+        if not address:
+            raise Exception(f'deploy contract failed, because: {receipt}.')
+
+        self.__build_contract(abi, bytecode, address, vm_type)
 
         return self
 
+    def __build_contract(self,
+                         abi,
+                         bytecode=None,
+                         address=None,
+                         vm_type: Literal['solidity', 'wasm'] = 'solidity',
+                         ):
+        self.abi = abi
+        self.bytecode = bytecode
+        self.address = address
+        self.vm_type = vm_type
+        self._origin = self.web3.platon.contract(address=self.address, abi=self.abi, bytecode=self.bytecode, vm_type=self.vm_type)
+        self.functions = self._origin.functions
+        self.events = self._origin.events
+        self._set_functions(self._origin.functions)
+        self._set_events(self._origin.events)
+        self._set_fallback(self._origin.fallback)
+
     def _set_functions(self, functions):
+        # 合约event和function不会重名，因此不用担心属性已存在
         for func in functions:
             warp_function = self._function_wrap(getattr(functions, func))
             setattr(self, func, warp_function)
 
     def _set_events(self, events):
-        # todo: 处理event和function重名问题
+        # 合约event和function不会重名，因此不用担心属性已存在
         for event in events:
             # 通过方法名获取方法
             warp_event = self._event_wrap(event)
@@ -70,10 +96,14 @@ class Contract(Module):
         if len(fn_abi) != 1:
             raise ValueError('The method not found in the ABI, or more than one.')
 
+        # 忽略首个参数 'self'，以适配公共合约包装类
+        def fit_func(__self__, *args, **kwargs):
+            return func(*args, **kwargs)
+
         if fn_abi[0].get('stateMutability') == 'view':
-            return contract_call(func)
+            return partial(contract_call(fit_func), self)
         else:
-            return contract_transaction(func)
+            return partial(contract_transaction(fit_func), self)
 
     @staticmethod
     def _event_wrap(func):

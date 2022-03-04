@@ -29,7 +29,7 @@ class Module:
         self.default_account = account
 
     def set_returns(self, returns):
-        if returns in ('txn', 'hash', 'receipt'):
+        if returns in ('txn', 'hash', 'receipt', 'ic-event'):
             self.returns = returns
         else:
             raise ValueError('Unrecognized value')

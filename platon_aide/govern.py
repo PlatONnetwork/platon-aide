@@ -186,6 +186,8 @@ class Govern(Module):
         proposal_result = self.web3.pip.get_proposal_result(proposal_id)
         if not proposal_result:
             raise ValueError('proposal is not found.')
+        if type(proposal_result) is str:
+            raise ValueError(f'{proposal_result}.')
 
         partici_count = proposal_result['yeas'] + proposal_result['nays'] + proposal_result['abstentions']
         proposal_result['particiRatio'] = partici_count / proposal_result['accuVerifiers']
