@@ -35,21 +35,22 @@ class _StakingInfo(AttributeDict):
 
 
 class Staking(Module):
-    node_id: str
-    bls_pubkey: str
-    bls_proof: str
-    version: str
-    version_sign: str
+    _node_id: str
+    _bls_pubkey: str
+    _bls_proof: str
+    _version: str
+    _version_sign: str
 
     def __init__(self, web3: Web3):
         super().__init__(web3)
-        self.returns = 'ic-event'
+        self._module_type = 'inner-contract'
+        self._result_type = 'event'
         self._get_node_info()
         self._economic = Economic(web3)
 
     @property
     def staking_info(self):
-        candidate_info = self.get_candidate_info(self.node_id)
+        candidate_info = self.get_candidate_info(self._node_id)
         if candidate_info:
             return candidate_info
         raise AttributeError('the node has no staking information.')
@@ -78,12 +79,12 @@ class Staking(Module):
                           self.web3.platon.account.from_key(private_key).address or \
                           self.default_account.address
 
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         amount = amount or self._economic.staking_limit
-        version = version or self.version
-        version_sign = version_sign or self.version_sign
-        bls_pubkey = bls_pubkey or self.bls_pubkey
-        bls_proof = bls_proof or self.bls_proof
+        version = version or self._version
+        version_sign = version_sign or self._version_sign
+        bls_pubkey = bls_pubkey or self._bls_pubkey
+        bls_proof = bls_proof or self._bls_proof
         return self.web3.ppos.staking.create_staking(balance_type, benifit_address, node_id, external_id,
                                                      node_name, website, details, amount, reward_per,
                                                      version, version_sign, bls_pubkey, bls_proof
@@ -97,13 +98,13 @@ class Staking(Module):
                          txn=None,
                          private_key=None,
                          ):
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         amount = amount or self._economic.add_staking_limit
         return self.web3.ppos.staking.increase_staking(node_id, balance_type, amount)
 
     @contract_transaction
     def withdrew_staking(self, node_id=None, txn=None, private_key=None):
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         return self.web3.ppos.staking.withdrew_staking(node_id)
 
     @contract_transaction
@@ -118,7 +119,7 @@ class Staking(Module):
                        txn=None,
                        private_key=None,
                        ):
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         return self.web3.ppos.staking.edit_staking(node_id, benifit_address, reward_per, external_id,
                                                    node_name, website, details
                                                    )
@@ -136,7 +137,7 @@ class Staking(Module):
         return [_StakingInfo(candidate) for candidate in candidate_list]
 
     def get_candidate_info(self, node_id=None):
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         staking_info = self.web3.ppos.staking.get_candidate_info(node_id)
         if staking_info == 'Query candidate info failed:Candidate info is not found':
             return None

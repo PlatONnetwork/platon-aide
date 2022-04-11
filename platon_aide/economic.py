@@ -290,7 +290,7 @@ class Economic(Module):
     #     if epoch and (not verifier_count):
     #         Warning('when passing in epoch, it is recommended to pass in the verifier count of the epoch.')
     #
-    #     node_id = node_id or self.node_id
+    #     node_id = node_id or self._node_id
     #     if not epoch:
     #         epoch, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
     #

@@ -7,7 +7,6 @@ from platon_aide.staking import Staking
 from platon_aide.utils import contract_transaction
 
 
-
 class _DelegateInfo(AttributeDict):
     """ 委托信息的属性字典类
     """
@@ -26,7 +25,8 @@ class Delegate(Module):
 
     def __init__(self, web3: Web3):
         super().__init__(web3)
-        self.returns = 'ic-event'
+        self._module_type = 'inner-contract'
+        self._result_type = 'event'
         self._get_node_info()
         self._economic = Economic(web3)
 
@@ -46,7 +46,7 @@ class Delegate(Module):
         """ 委托节点，以获取节点的奖励分红
         """
         amount = amount or self._economic.add_staking_limit
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         return self.web3.ppos.delegate.delegate(node_id, balance_type, amount)
 
     @contract_transaction
@@ -61,7 +61,7 @@ class Delegate(Module):
         撤回对节点的委托，可以撤回部分委托
         注意：因为节点可能进行过多次质押/撤销质押，会使得委托信息遗留，因此撤回委托时必须指定节点质押区块
         """
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         amount = amount or self._economic.add_staking_limit
         staking_block_identifier = staking_block_identifier or self._staking_block_number
 
@@ -80,7 +80,7 @@ class Delegate(Module):
         """
         if self.default_account:
             address = address or self.default_account.address
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         staking_block_identifier = staking_block_identifier or self._staking_block_number
 
         delegate_info = self.web3.ppos.delegate.get_delegate_info(address, node_id, staking_block_identifier)

@@ -7,10 +7,6 @@ from platon_aide.utils import contract_transaction
 
 class Transfer(Module):
 
-    def __init__(self, web3: Web3):
-        super().__init__(web3)
-        self.returns = 'receipt'
-
     # 转账交易
     # todo: 交易不支持返回类型为ic-event
     def transfer(self, to_address, amount, txn=None, private_key=None):
@@ -25,13 +21,12 @@ class Transfer(Module):
         if txn:
             base_txn.update(txn)
         txn = base_txn
-        if self.returns == 'txn':
+        if self._result_type == 'txn':
             return txn
-        private_key = private_key or self.default_account.privateKey.hex()[2:]
-        return self.send_transaction(txn, private_key, self.returns)
+        return self.send_transaction(txn, private_key, self._result_type)
 
     @contract_transaction
-    def restricting(self, release_address, plans, txn=gas.restrictingGas, private_key=None):
+    def restricting(self, release_address, plans, txn=None, private_key=None):
         return self.web3.restricting.create_restricting(release_address, plans)
 
     def get_balance(self, account, block_identifier=None):

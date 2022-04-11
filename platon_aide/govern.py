@@ -79,7 +79,8 @@ class Govern(Module):
 
     def __init__(self, web3: Web3):
         super().__init__(web3)
-        self.returns = 'ic-event'
+        self._module_type = 'inner-contract'
+        self._result_type = 'event'
         self._get_node_info()
 
     @property
@@ -104,11 +105,11 @@ class Govern(Module):
                          ):
         """ 提交版本提案，实现链上共识硬分叉版本的升级
         """
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         return self.web3.pip.submit_version_proposal(node_id, pip_number, version, voting_rounds)
 
     @contract_transaction
-    def param_version(self,
+    def param_proposal(self,
                       module,
                       name,
                       value,
@@ -119,7 +120,7 @@ class Govern(Module):
                       ):
         """ 提交参数提案，修改链上可治理参数
         """
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         return self.web3.pip.submit_param_proposal(node_id, pip_number, module, name, value)
 
     @contract_transaction
@@ -133,7 +134,7 @@ class Govern(Module):
                         ):
         """ 提交取消提案
         """
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         return self.web3.pip.submit_cancel_proposal(node_id, pip_number, voting_rounds, proposal_id)
 
     @contract_transaction
@@ -145,7 +146,7 @@ class Govern(Module):
                       ):
         """ 提交文本提案，文本提案不对链上产生影响，仅做pip投票意见收集作用
         """
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         return self.web3.pip.submit_text_proposal(node_id, pip_number)
 
     @contract_transaction
@@ -160,9 +161,9 @@ class Govern(Module):
              ):
         """ 对提案进行投票
         """
-        node_id = node_id or self.node_id
-        version = version or self.version
-        version_sign = version_sign or self.version_sign
+        node_id = node_id or self._node_id
+        version = version or self._version
+        version_sign = version_sign or self._version_sign
         return self.web3.pip.vote(node_id, proposal_id, option, version, version_sign)
 
     @contract_transaction
@@ -175,9 +176,9 @@ class Govern(Module):
                         ):
         """ 向链上声明节点版本，以获得参与共识出块的资格
         """
-        node_id = node_id or self.node_id
-        version = version or self.version
-        version_sign = version_sign or self.version_sign
+        node_id = node_id or self._node_id
+        version = version or self._version
+        version_sign = version_sign or self._version_sign
         return self.web3.pip.declare_version(node_id, version, version_sign)
 
     def get_proposal_result(self, proposal_id):

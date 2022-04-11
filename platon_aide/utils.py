@@ -12,6 +12,7 @@ from platon_hash.auto import keccak
 from platon_keys.datatypes import Signature
 from platon_typing import HexStr
 from platon_utils import remove_0x_prefix, to_canonical_address
+
 from gql import Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.websockets import WebsocketsTransport
@@ -40,7 +41,7 @@ def get_web3(uri, chain_id=None, hrp=None, timeout=10):
 
 
 def get_gql(uri):
-    """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
+    """ 通过gql uri，获取gql对象。
     # todo: 增加超时处理
     """
     if uri.startswith('http'):
@@ -53,7 +54,7 @@ def get_gql(uri):
     return Client(transport=transport(uri), fetch_schema_from_transport=True)
 
 
-def send_transaction(web3: Web3, txn: dict, private_key: str, returns='receipt'):
+def send_transaction(web3: Web3, txn: dict, private_key: str):
     """
     签名交易并发送，可以获取交易hash或交易回执
 
@@ -64,25 +65,30 @@ def send_transaction(web3: Web3, txn: dict, private_key: str, returns='receipt')
         returns: 指定要返回的结果，取值如下：
                 - 'hash': 返回交易哈希
                 - 'receipt': 返回交易回执
-                - 'ic-event': 返回内置合约的event内容
+                - 'event': 返回内置合约的event内容
     """
+    if not private_key:
+        return web3.platon.send_transaction(txn)
+
     if not txn.get('nonce'):
         account = web3.platon.account.from_key(private_key, hrp=web3.hrp)
-        nonce = web3.platon.get_transaction_count(account.address)
-        txn['nonce'] = nonce
+        txn['nonce'] = web3.platon.get_transaction_count(account.address)
 
     signed_txn = web3.platon.account.sign_transaction(txn, private_key, web3.hrp)
-    tx_hash = web3.platon.send_raw_transaction(signed_txn.rawTransaction)
-    if returns == 'hash':
-        return bytes(tx_hash).hex()
+    return web3.platon.send_raw_transaction(signed_txn.rawTransaction)
 
+
+def get_transaction_result(web3: Web3, tx_hash, result_type):
+    """ 根据指定的result type，来获取交易的返回值
+    """
+    if result_type == 'hash':
+        return bytes(tx_hash).hex()
     receipt = web3.platon.wait_for_transaction_receipt(tx_hash)
     if type(receipt) is bytes:
         receipt = receipt.decode('utf-8')
-    if returns == 'receipt':
+    if result_type == 'receipt':
         return receipt
-
-    if returns == 'ic-event':
+    if result_type == 'event':
         return InnerContractEvent.get_event(receipt)
 
 
@@ -95,11 +101,8 @@ def contract_call(func):
 
 
 def contract_transaction(func):
+    """ todo: 增加注释
     """
-    包装类，用于在调用Module及其子类的方法时，自定义要返回的结果
-    可以返回未发送的交易dict、交易hash、交易回执
-    """
-
     @functools.wraps(func)
     def wrapper(self, *args, txn=None, private_key=None, **kwargs):
         private_key = private_key or self.default_account.privateKey
@@ -113,15 +116,15 @@ def contract_transaction(func):
             txn['from'] = account.address
 
         txn = func(self, *args, **kwargs).build_transaction(txn)
-        if self.returns == 'txn':
+        if self._result_type == 'txn':
             return txn
-        return self.send_transaction(txn, private_key, self.returns)
+        return self.send_transaction(txn, private_key, self._result_type)
 
     return wrapper
 
 
 def ec_recover(block: BlockData):
-    """ keccak解出区块的签名节点公钥
+    """ 使用keccak方式，解出区块的签名节点公钥
     """
     extra = block.proofOfAuthorityData[:32]
     sign = block.proofOfAuthorityData[32:]

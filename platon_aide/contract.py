@@ -36,16 +36,11 @@ class Contract(Module):
         if self.address:
             raise Warning(f'contract {self.address} already exists, it will be replaced.')
 
-        private_key = private_key or self.default_account.privateKey
-        if not private_key:
-            raise ValueError('private key is required.')
-
         _temp_origin = self.web3.platon.contract(abi=abi, bytecode=bytecode, vm_type=vm_type)
         txn = _temp_origin.constructor(*init_args, **init_kwargs).build_transaction(txn)
-
         receipt = self.send_transaction(txn, private_key)
-        address = receipt.get('contractAddress')
 
+        address = receipt.get('contractAddress')
         if not address:
             raise Exception(f'deploy contract failed, because: {receipt}.')
 

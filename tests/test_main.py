@@ -8,17 +8,17 @@ def test_main():
 
 
 def test_set_returns():
-    aide.set_returns('receipt')
+    aide.set_result_type('receipt')
     address = aide.platon.account.create().address
     transfer_result = aide.transfer.transfer(to_address=address, amount=aide.delegate._economic.add_staking_limit)
     assert transfer_result['status'] == 1
 
-    aide.set_returns('hash')
+    aide.set_result_type('hash')
     address = aide.platon.account.create().address
     transfer_result = aide.transfer.transfer(to_address=address, amount=aide.delegate._economic.add_staking_limit)
     assert isinstance(transfer_result, str)
 
-    aide.set_returns('txn')
+    aide.set_result_type('txn')
     address = aide.platon.account.create().address
     transfer_result = aide.transfer.transfer(to_address=address, amount=aide.delegate._economic.add_staking_limit)
     assert isinstance(transfer_result, dict)

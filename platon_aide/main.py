@@ -49,13 +49,13 @@ class PlatonAide:
         self.govern.set_default_account(account)
         self.contract.set_default_account(account)
 
-    def set_returns(self, returns):
-        self.transfer.set_returns(returns)
-        self.staking.set_returns(returns)
-        self.delegate.set_returns(returns)
-        self.slashing.set_returns(returns)
-        self.govern.set_returns(returns)
-        self.contract.set_returns(returns)
+    def set_result_type(self, result_type):
+        self.transfer.set_result_type(result_type)
+        self.staking.set_result_type(result_type)
+        self.delegate.set_result_type(result_type)
+        self.slashing.set_result_type(result_type)
+        self.govern.set_result_type(result_type)
+        self.contract.set_result_type(result_type)
 
     def create_account(self):
         """ 创建账户
@@ -70,11 +70,6 @@ class PlatonAide:
         """
         # todo: coding
         pass
-
-    def send_transaction(self, txn, private_key, returns='receipt'):
-        """ 签名交易并发送
-        """
-        return send_transaction(self.web3, txn, private_key, returns)
 
     def wait_block(self, to_block=None, interval=3):
         """ 等待块高

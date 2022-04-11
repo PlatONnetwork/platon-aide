@@ -8,7 +8,8 @@ class Slashing(Module):
 
     def __init__(self, web3: Web3):
         super().__init__(web3)
-        self.returns = 'ic-event'
+        self._module_type = 'inner-contract'
+        self._result_type = 'event'
         self._get_node_info()
 
     @contract_transaction
@@ -25,5 +26,5 @@ class Slashing(Module):
                              block_identifier,
                              node_id=None,
                              ):
-        node_id = node_id or self.node_id
+        node_id = node_id or self._node_id
         return self.web3.ppos.slashing.check_duplicate_sign(report_type, node_id, block_identifier)
