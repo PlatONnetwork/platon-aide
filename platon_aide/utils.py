@@ -103,18 +103,9 @@ def contract_call(func):
 def contract_transaction(func):
     """ todo: 增加注释
     """
+
     @functools.wraps(func)
     def wrapper(self, *args, txn=None, private_key=None, **kwargs):
-        private_key = private_key or self.default_account.privateKey
-        if not private_key:
-            raise ValueError('private key is required.')
-
-        account = Account.from_key(private_key, self.web3.hrp)
-        if not txn:
-            txn = {'from': account.address}
-        if not txn.get('from'):
-            txn['from'] = account.address
-
         txn = func(self, *args, **kwargs).build_transaction(txn)
         if self._result_type == 'txn':
             return txn
