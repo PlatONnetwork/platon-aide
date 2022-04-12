@@ -1,13 +1,13 @@
 import pytest
 from platon import Account
 
-from platon_aide.main import PlatonAide
+from platon_aide.main import Aide
 
 consensus_uri = 'http://192.168.16.121:6789'
-consensus_aide = PlatonAide(consensus_uri)
+consensus_aide = Aide(consensus_uri)
 
 uri = 'http://192.168.16.121:6790'
-aide = PlatonAide(uri)
+aide = Aide(uri)
 account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa', hrp='lat')
 aide.set_default_account(account)
 

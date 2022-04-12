@@ -13,7 +13,7 @@ from platon_aide.graphic import Graphql
 from platon_aide.utils import get_web3, send_transaction, ec_recover
 
 
-class PlatonAide:
+class Aide:
     """ 主类，platon各个子模块的集合体，同时支持创建账户、解码等非交易类的操作
     """
 
