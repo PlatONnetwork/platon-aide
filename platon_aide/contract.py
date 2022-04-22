@@ -1,6 +1,6 @@
+import warnings
 from functools import wraps, partial
 from typing import Literal
-
 from platon._utils.abi import filter_by_name
 from platon.contract import ContractFunction
 from platon.types import ABI
@@ -34,7 +34,7 @@ class Contract(Module):
                *init_args,
                **init_kwargs):
         if self.address:
-            raise Warning(f'contract {self.address} already exists, it will be replaced.')
+            warnings.warn(f'contract {self.address} already exists, it will be replaced.', RuntimeWarning)
 
         _temp_origin = self.web3.platon.contract(abi=abi, bytecode=bytecode, vm_type=vm_type)
         txn = _temp_origin.constructor(*init_args, **init_kwargs).build_transaction(txn)
@@ -95,7 +95,7 @@ class Contract(Module):
         def fit_func(__self__, *args, **kwargs):
             return func(*args, **kwargs)
 
-        if fn_abi[0].get('stateMutability') == 'view':
+        if fn_abi[0].get('stateMutability') in ['view', 'pure']:
             return partial(contract_call(fit_func), self)
         else:
             return partial(contract_transaction(fit_func), self)

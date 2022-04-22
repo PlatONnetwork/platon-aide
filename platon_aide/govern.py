@@ -181,6 +181,12 @@ class Govern(Module):
         version_sign = version_sign or self._version_sign
         return self.web3.pip.declare_version(node_id, version, version_sign)
 
+    def get_proposal(self, proposal_id):
+        """ 获取提案信息
+        """
+        proposal = self.web3.pip.get_proposal(proposal_id)
+        return to_attribute_proposal(proposal)
+
     def get_proposal_result(self, proposal_id):
         """ 获取提案投票结果信息
         """

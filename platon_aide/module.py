@@ -1,5 +1,7 @@
+import warnings
 from platon import Account
 from platon import Web3
+from platon_typing import Address
 
 from platon_aide.utils import send_transaction, get_transaction_result
 
@@ -10,6 +12,8 @@ class Module:
     def __init__(self, web3: Web3):
         self.web3 = web3
         self.default_account: Account = None
+        # todo: 设置默认地址
+        self.default_address: Address = None
 
         # 模块类型，目前仅用于判断是否可以返回event，包括：'inner-contract'
         self._module_type = ''
@@ -49,8 +53,8 @@ class Module:
             raise ValueError('Unrecognized value')
 
         if result_type == 'event' and self._module_type != 'inner-contract':
-            Warning(f'result type "event" only support inner contract, '
-                    f'set {self.__class__.__name__} result type to "receipt"')
+            warnings.warn(f'result type "event" only support inner contract, '
+                    f'try set {self.__class__.__name__} result type to "receipt"', RuntimeWarning)
             result_type = 'receipt'
 
         self._result_type = result_type

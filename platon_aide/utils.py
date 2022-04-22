@@ -106,7 +106,8 @@ def contract_transaction(func):
 
     @functools.wraps(func)
     def wrapper(self, *args, txn=None, private_key=None, **kwargs):
-        txn = func(self, *args, **kwargs).build_transaction(txn)
+        # todo: 在预估gas之前，增加from地址指定
+        txn = func(self, *args, txn=None, private_key=None, **kwargs).build_transaction(txn)
         if self._result_type == 'txn':
             return txn
         return self.send_transaction(txn, private_key, self._result_type)
