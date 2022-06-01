@@ -7,11 +7,11 @@ from setuptools import (
 deps = {
     'platon-aide': [
         'platon.py>=1.2.0',
-        'platon_account>=0.5.5',
-        'platon_hash>=0.3.1',
-        'platon_keys>=0.3.3',
-        'platon_typing>=2.2.3',
-        'platon_utils>=1.10.0',
+        'platon_account>=1.2.0',
+        'platon_hash>=1.2.0',
+        'platon_keys>=1.2.0',
+        'platon_typing>=1.2.0',
+        'platon_utils>=1.2.0',
         'rlp>=1.2.0',
         'gql>=3.0.0rc0',
     ]
