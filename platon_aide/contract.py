@@ -1,7 +1,7 @@
 import warnings
 from functools import wraps, partial
 from typing import Literal
-from platon._utils.abi import filter_by_name
+from platon._utils.abi import filter_by_name, filter_by_argument_name
 from platon.contract import ContractFunction
 from platon.types import ABI
 from platon_typing import HexStr, AnyAddress
@@ -86,16 +86,22 @@ class Contract(Module):
             self.fallback = fallback
 
     def _function_wrap(self, func):
+        fn_abis = filter_by_name(func.fn_name, self.abi)
+        if len(fn_abis) == 0:
+            raise ValueError('The method ABI is not found.')
 
-        fn_abi = filter_by_name(func.fn_name, self.abi)
-        if len(fn_abi) != 1:
-            raise ValueError('The method not found in the ABI, or more than one.')
+        # 对于重载方法，仅取其一个，但需要其方法类型相同
+        # todo: 此处理存在隐患
+        fn_abi = fn_abis[0]
+        for _abi in fn_abis:
+            if _abi.get('stateMutability') != fn_abi.get('stateMutability'):
+                raise ValueError('override method are of different types')
 
         # 忽略首个参数 'self'，以适配公共合约包装类
         def fit_func(__self__, *args, **kwargs):
             return func(*args, **kwargs)
 
-        if fn_abi[0].get('stateMutability') in ['view', 'pure']:
+        if fn_abi.get('stateMutability') in ['view', 'pure']:
             return partial(contract_call(fit_func), self)
         else:
             return partial(contract_transaction(fit_func), self)
