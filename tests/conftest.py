@@ -8,7 +8,7 @@ consensus_aide = Aide(consensus_uri)
 
 uri = 'http://192.168.16.121:6790'
 aide = Aide(uri)
-account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa', hrp='lat')
+account = Account().from_key(private_key='f51ca759562e1daf9e5302d121f933a8152915d34fcbc27e542baf256b5e4b74', hrp='lat')
 aide.set_default_account(account)
 
 

@@ -1,10 +1,12 @@
+from loguru import logger
+
 from tests.conftest import *
 
 
 def test_main():
     assert uri == aide.uri
     assert aide.hrp == 'lat'
-    assert aide.chain_id == 100
+    assert aide.chain_id == 201019
 
 
 def test_set_returns():
@@ -52,3 +54,69 @@ def test_set_default_account():
                                  hrp='lat')
     aide.set_default_account(account)
     assert aide.staking.default_account == 'lat1rzw6lukpltqn9rk5k59apjrf5vmt2ncv8uvfn7'
+
+
+def test_inner_vrf_contract():
+    """测试调用内置VRF合约"""
+    abi_info = [
+        {
+            "inputs": [
+                {
+                    "internalType": "uint32",
+                    "name": "numWords",
+                    "type": "uint32"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "returnValueLength",
+                    "type": "uint256"
+                }
+            ],
+            "name": "InvalidRandomWords",
+            "type": "error"
+        },
+        {
+            "anonymous": False,
+            "inputs": [
+                {
+                    "indexed": False,
+                    "internalType": "uint256[]",
+                    "name": "randomWords",
+                    "type": "uint256[]"
+                }
+            ],
+            "name": "RandomWords",
+            "type": "event"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint32",
+                    "name": "numWords",
+                    "type": "uint32"
+                }
+            ],
+            "name": "requestRandomWords",
+            "outputs": [
+                {
+                    "internalType": "uint256[]",
+                    "name": "",
+                    "type": "uint256[]"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        }
+    ]
+    with open(r'C:\Jw\code\github\platon-aide\build\VRF.bin') as f:
+        bytecode = f.read()
+
+    # init_aide = aide.contract.init(abi=result, bytecode=res)  # 链上已经有合约地址即可获得一个合约对象
+    contract_obj = aide.contract.deploy(abi=abi_info, bytecode=bytecode)  # deploy 新合约对象
+    receipt = contract_obj.requestRandomWords(5)
+    result = contract_obj.RandomWords(receipt)
+    logger.info(result)
+    random_len = len(result[0].args.randomWords)
+    logger.info(random_len)
+    pass
+
