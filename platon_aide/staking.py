@@ -60,7 +60,7 @@ class Staking(Module):
                        amount=None,
                        balance_type=0,
                        node_id=None,
-                       benifit_address=None,
+                       benefit_address=None,
                        node_name='',
                        external_id='',
                        details='',
@@ -73,11 +73,12 @@ class Staking(Module):
                        txn=None,
                        private_key=None,
                        ):
-        private_key = private_key or self.default_account.privateKey.hex()[2:]
 
-        benifit_address = benifit_address or \
-                          self.web3.platon.account.from_key(private_key).address or \
-                          self.default_account.address
+        if not benefit_address:
+            benefit_account = self.web3.platon.account.from_key(private_key) if private_key else self.default_account
+            if not benefit_account:
+                raise ValueError('the benefit address cannot be empty')
+            benefit_address = benefit_account.address
 
         node_id = node_id or self._node_id
         amount = amount or self._economic.staking_limit
@@ -85,7 +86,7 @@ class Staking(Module):
         version_sign = version_sign or self._version_sign
         bls_pubkey = bls_pubkey or self._bls_pubkey
         bls_proof = bls_proof or self._bls_proof
-        return self.web3.ppos.staking.create_staking(balance_type, benifit_address, node_id, external_id,
+        return self.web3.ppos.staking.create_staking(balance_type, benefit_address, node_id, external_id,
                                                      node_name, website, details, amount, reward_per,
                                                      version, version_sign, bls_pubkey, bls_proof
                                                      )
