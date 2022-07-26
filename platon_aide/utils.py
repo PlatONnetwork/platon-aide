@@ -106,7 +106,11 @@ def contract_transaction(func):
 
     @functools.wraps(func)
     def wrapper(self, *args, txn=None, private_key=None, **kwargs):
-        # todo: 在预估gas之前，增加from地址指定
+        # 预填充from地址，避免预估gas时地址相关检验不通过
+        account = self.web3.platon.account.from_key(private_key) if private_key else self.default_account
+        if not txn.get('from'):
+            txn['from'] = account.address
+
         txn = func(self, *args, private_key=private_key, **kwargs).build_transaction(txn)
         if self._result_type == 'txn':
             return txn
