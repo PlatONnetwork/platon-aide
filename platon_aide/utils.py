@@ -110,8 +110,12 @@ def contract_transaction(func):
         account = self.web3.platon.account.from_key(private_key) if private_key else self.default_account
         if not txn.get('from'):
             txn['from'] = account.address
+        # solidity合约方法不传入private key参数，避免abi解析问题
+        if func.__name__ == 'fit_func':
+            txn = func(self, *args, **kwargs).build_transaction(txn)
+        else:
+            txn = func(self, *args, private_key=private_key, **kwargs).build_transaction(txn)
 
-        txn = func(self, *args, private_key=private_key, **kwargs).build_transaction(txn)
         if self._result_type == 'txn':
             return txn
         return self.send_transaction(txn, private_key, self._result_type)
