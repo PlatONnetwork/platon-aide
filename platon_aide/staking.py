@@ -75,7 +75,7 @@ class Staking(Module):
                        ):
 
         if not benefit_address:
-            benefit_account = self.web3.platon.account.from_key(private_key) if private_key else self.default_account
+            benefit_account = self.web3.platon.account.from_key(private_key, hrp=self.web3.hrp) if private_key else self.default_account
             if not benefit_account:
                 raise ValueError('the benefit address cannot be empty')
             benefit_address = benefit_account.address
