@@ -1,4 +1,8 @@
 import functools
+import os
+import sys
+from os.path import abspath
+
 import rlp
 from hexbytes import HexBytes
 
@@ -138,3 +142,44 @@ def ec_recover(block: BlockData):
     signature_bytes_standard = to_standard_signature_bytes(signature_bytes)
     signature = Signature(signature_bytes=signature_bytes_standard)
     return remove_0x_prefix(HexStr(signature.recover_public_key_from_msg_hash(hash_bytes).to_hex()))
+
+
+def run(cmd):
+    """
+    The machine executes the cmd command and gets the result
+    :param cmd:
+    :return:
+    """
+    r = os.popen(cmd)
+    out = r.read()
+    r.close()
+    return out
+
+
+def mock_duplicate_sign(dtype, sk, blskey, block_number, epoch=0, view_number=0, block_index=0, index=0):
+    """
+    forged double sign
+    :param dtype:
+    :param sk:
+    :param blskey:
+    :param block_number:
+    :param epoch:
+    :param view_number:
+    :param block_index:
+    :param index:
+    :return:
+    """
+    if sys.platform in "linux,linux2":
+        tool_file = abspath("tool/linux/duplicateSign")
+        run("chmod +x {}".format(tool_file))
+    else:
+        tool_file = abspath("tool/win/duplicateSign.exe")
+    print("{} -dtype={} -sk={} -blskey={} -blockNumber={} -epoch={} -viewNumber={} -blockIndex={} -vindex={}".format(
+            tool_file, dtype, sk, blskey, block_number, epoch, view_number, block_index, index))
+    output = run(
+        "{} -dtype={} -sk={} -blskey={} -blockNumber={} -epoch={} -viewNumber={} -blockIndex={} -vindex={}".format(
+            tool_file, dtype, sk, blskey, block_number, epoch, view_number, block_index, index))
+    print(output)
+    if not output:
+        raise Exception("unable to use double sign tool")
+    return output.strip("\n")
