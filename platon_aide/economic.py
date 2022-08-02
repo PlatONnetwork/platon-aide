@@ -70,8 +70,16 @@ class GenesisData:
     """ PlatON创世数据
     """
 
-    def __init__(self, web3: Web3):
-        economic_config = json.loads(web3.debug.economic_config())
+    def __init__(self, web3: Web3, genesis: str = None):
+        # 支持链上接口和链下文件两种初始化方式
+        if hasattr(web3, 'debug'):
+            data = web3.debug.economic_config()
+            economic_config = json.loads(data)
+        else:
+            with open(genesis) as f:
+                data = json.loads(f.read())
+                economic_config = data['economicModel']
+
         self.chain = _ChainData(economic_config['common'])
         self.restricting = _RestrictingData(economic_config.get('restricting')) if economic_config.get('restricting') else None
         self.staking = _StakingData(economic_config['staking'])
@@ -86,9 +94,9 @@ gas = _GasData()
 
 class Economic(Module):
 
-    def __init__(self, web3: Web3):
+    def __init__(self, web3: Web3, genesis: str = None):
         super().__init__(web3)
-        self.genesis = GenesisData(web3)
+        self.genesis = GenesisData(web3, genesis)
         self._get_node_info()
 
     # 区块

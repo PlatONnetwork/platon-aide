@@ -1,5 +1,6 @@
 import time
 
+from platon.main import get_default_modules
 from platon.middleware import gplaton_poa_middleware
 
 from platon_aide.contract import Contract
@@ -17,23 +18,39 @@ class Aide:
     """ 主类，platon各个子模块的集合体，同时支持创建账户、解码等非交易类的操作
     """
 
-    def __init__(self, uri: str, gql_uri: str = None, chain_id: int = None, hrp: str = None):
+    def __init__(self,
+                 uri: str,
+                 gql_uri: str = None,
+                 chain_id: int = None,
+                 hrp: str = None,
+                 genesis: str = None,
+                 modules: dict = None,
+                 ):
         self.uri = uri
         self.gql_uri = gql_uri
-        self.web3 = get_web3(uri, chain_id, hrp)
+        # web3相关设置
+        if not modules:
+            modules = get_default_modules()    # 获取默认modules
+        self.web3 = get_web3(uri, chain_id, hrp, modules=modules)
         self.web3.middleware_onion.inject(gplaton_poa_middleware, layer=0)
         self.hrp = hrp or self.web3.hrp
         self.chain_id = chain_id or self.web3.platon.chain_id
-        # 加入接口和模块
-        self.platon = self.web3.platon
-        self.admin = self.web3.node.admin
-        self.personal = self.web3.node.personal
-        self.txpool = self.web3.node.txpool
-        self.debug = self.web3.debug
-        self.economic = Economic(self.web3)
+        # 根据模块信息设置对象属性
+        if hasattr(self.web3, 'platon'):
+            self.platon = self.web3.platon
+        if hasattr(self.web3, 'debug'):
+            self.debug = self.web3.debug
+        if hasattr(self.web3, 'admin'):
+            self.admin = self.web3.node.admin
+        if hasattr(self.web3.node, 'personal'):
+            self.personal = self.web3.node.personal
+        if hasattr(self.web3.node, 'txpool'):
+            self.txpool = self.web3.node.txpool
+
+        self.economic = Economic(self.web3, genesis=genesis)
         self.transfer = Transfer(self.web3)
-        self.staking = Staking(self.web3)
-        self.delegate = Delegate(self.web3)
+        self.staking = Staking(self.web3, economic=self.economic)
+        self.delegate = Delegate(self.web3, economic=self.economic)
         self.slashing = Slashing(self.web3)
         self.govern = Govern(self.web3)
         self.contract = Contract(self.web3)

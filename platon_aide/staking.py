@@ -41,12 +41,12 @@ class Staking(Module):
     _version: str
     _version_sign: str
 
-    def __init__(self, web3: Web3):
+    def __init__(self, web3: Web3, economic: Economic = None):
         super().__init__(web3)
         self._module_type = 'inner-contract'
         self._result_type = 'event'
         self._get_node_info()
-        self._economic = Economic(web3)
+        self._economic = economic if economic else Economic(web3)
 
     @property
     def staking_info(self):

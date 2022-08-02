@@ -22,7 +22,7 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.websockets import WebsocketsTransport
 
 
-def get_web3(uri, chain_id=None, hrp=None, timeout=10):
+def get_web3(uri, chain_id=None, hrp=None, timeout=10, modules=None):
     """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
     """
     if uri.startswith('http'):
@@ -36,7 +36,7 @@ def get_web3(uri, chain_id=None, hrp=None, timeout=10):
 
     with Timeout(timeout) as t:
         while True:
-            web3 = Web3(provider(uri), chain_id=chain_id, hrp=hrp)
+            web3 = Web3(provider(uri), chain_id=chain_id, hrp=hrp, modules=modules)
             if web3.isConnected():
                 break
             t.sleep(2)
