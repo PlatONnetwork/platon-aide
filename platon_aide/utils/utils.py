@@ -10,7 +10,6 @@ from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon._utils.inner_contract import InnerContractEvent
 from platon._utils.threads import Timeout
 from platon.types import BlockData
-from platon_account import Account
 from platon_account._utils.signing import to_standard_signature_bytes
 from platon_hash.auto import keccak
 from platon_keys.datatypes import Signature

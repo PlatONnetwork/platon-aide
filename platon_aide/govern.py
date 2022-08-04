@@ -3,62 +3,8 @@ from time import time
 from platon import Web3
 from platon.datastructures import AttributeDict
 
-from platon_aide.module import Module
+from platon_aide.base.module import Module
 from platon_aide.utils import contract_transaction
-
-
-class _ChainVersion(AttributeDict):
-    integer: int
-    major: int
-    minor: int
-    patch: int
-
-
-class _BaseProposal(AttributeDict):
-    ProposalID: str
-    Proposer: str
-    ProposalType: int
-    PIPID: str
-    SubmitBlock: int
-    EndVotingBlock: int
-
-
-class _VersionProposal(_BaseProposal):
-    EndVotingRounds: int
-    ActiveBlock: int
-    NewVersion: int
-
-
-class _ParamProposal(_BaseProposal):
-    Module: str
-    Name: str
-    NewVersion: str
-
-
-class _CancelProposal(_BaseProposal):
-    EndVotingRounds: str
-    EndVotingBlock: str
-    TobeCanceled: str
-
-
-class _TextProposal(_BaseProposal):
-    pass
-
-
-class _ProposalVotes(AttributeDict):
-    accuVerifiers: int
-    yeas: int
-    nays: int
-    abstentions: int
-    particiRatio: float
-    yeasRatio: float
-
-
-class _ProposalResult(_ProposalVotes):
-    proposalID: str
-    status: int
-    canceledBy: str
-
 
 second = lambda: str(int(time()))
 
@@ -66,16 +12,17 @@ second = lambda: str(int(time()))
 def to_attribute_proposal(proposal):
     _type = proposal['ProposalType']
     wizard = {
-        1: _TextProposal,
-        2: _VersionProposal,
-        3: _ParamProposal,
-        4: _CancelProposal,
+        1: TextProposal,
+        2: VersionProposal,
+        3: ParamProposal,
+        4: CancelProposal,
     }
     attribute_proposal = wizard[_type]
     return attribute_proposal(proposal)
 
 
 class Govern(Module):
+    governGasPrice: int = 2100000000000000
 
     def __init__(self, web3: Web3):
         super().__init__(web3)
@@ -87,7 +34,7 @@ class Govern(Module):
     def chain_version(self):
         version = self.web3.pip.get_chain_version()
         version_byte = int(version).to_bytes(length=3, byteorder='big')
-        return _ChainVersion({
+        return ChainVersion({
             'integer': version,
             'major': version_byte[0],
             'minor': version_byte[1],
@@ -110,14 +57,14 @@ class Govern(Module):
 
     @contract_transaction
     def param_proposal(self,
-                      module,
-                      name,
-                      value,
-                      pip_number=second(),
-                      node_id=None,
-                      txn=None,
-                      private_key=None,
-                      ):
+                       module,
+                       name,
+                       value,
+                       pip_number=second(),
+                       node_id=None,
+                       txn=None,
+                       private_key=None,
+                       ):
         """ 提交参数提案，修改链上可治理参数
         """
         node_id = node_id or self._node_id
@@ -200,7 +147,7 @@ class Govern(Module):
         proposal_result['particiRatio'] = partici_count / proposal_result['accuVerifiers']
         proposal_result['yeasRatio'] = proposal_result['yeas'] / partici_count if partici_count else 0
 
-        return _ProposalResult(proposal_result)
+        return ProposalResult(proposal_result)
 
     def get_proposal_votes(self, proposal_id, block_identifier='latest'):
         """ 获取提案实时投票信息
@@ -211,7 +158,7 @@ class Govern(Module):
 
         partici_count = proposal_votes[1] + proposal_votes[2] + proposal_votes[3]
 
-        return _ProposalVotes({
+        return ProposalVotes({
             'accuVerifiers': proposal_votes[0],
             'yeas': proposal_votes[1],
             'nays': proposal_votes[2],
@@ -238,3 +185,56 @@ class Govern(Module):
         """ 获取可治理参数列表信息
         """
         return self.web3.pip.govern_param_list(module)
+
+
+class ChainVersion(AttributeDict):
+    integer: int
+    major: int
+    minor: int
+    patch: int
+
+
+class BaseProposal(AttributeDict):
+    ProposalID: str
+    Proposer: str
+    ProposalType: int
+    PIPID: str
+    SubmitBlock: int
+    EndVotingBlock: int
+
+
+class VersionProposal(BaseProposal):
+    EndVotingRounds: int
+    ActiveBlock: int
+    NewVersion: int
+
+
+class ParamProposal(BaseProposal):
+    Module: str
+    Name: str
+    NewVersion: str
+
+
+class CancelProposal(BaseProposal):
+    EndVotingRounds: str
+    EndVotingBlock: str
+    TobeCanceled: str
+
+
+class TextProposal(BaseProposal):
+    pass
+
+
+class ProposalVotes(AttributeDict):
+    accuVerifiers: int
+    yeas: int
+    nays: int
+    abstentions: int
+    particiRatio: float
+    yeasRatio: float
+
+
+class ProposalResult(ProposalVotes):
+    proposalID: str
+    status: int
+    canceledBy: str

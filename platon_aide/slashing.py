@@ -1,6 +1,6 @@
 from platon import Web3
 
-from platon_aide.module import Module
+from platon_aide.base.module import Module
 from platon_aide.utils import contract_transaction
 
 

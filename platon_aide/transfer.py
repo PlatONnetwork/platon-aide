@@ -1,11 +1,10 @@
-from platon import Web3
-
-from platon_aide.economic import gas
-from platon_aide.module import Module
+from platon_aide.base.module import Module
 from platon_aide.utils import contract_transaction
 
 
 class Transfer(Module):
+    transferGas: int = 21000
+    restrictingGas: int = 100000
 
     # 转账交易
     # todo: 交易不支持返回类型为ic-event
@@ -13,7 +12,7 @@ class Transfer(Module):
         base_txn = {
             "to": to_address,
             "gasPrice": self.web3.platon.gas_price,
-            "gas": gas.transferGas,
+            "gas": self.transferGas,
             "data": '',
             "chainId": self.web3.chain_id,
             "value": amount,

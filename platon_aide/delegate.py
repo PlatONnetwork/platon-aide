@@ -1,24 +1,10 @@
 from platon import Web3
 from platon.datastructures import AttributeDict
 
-from platon_aide.economic import gas, Economic
-from platon_aide.module import Module
+from platon_aide.economic import Economic, new_economic
+from platon_aide.base.module import Module
 from platon_aide.staking import Staking
 from platon_aide.utils import contract_transaction
-
-
-class _DelegateInfo(AttributeDict):
-    """ 委托信息的属性字典类
-    """
-    Addr: str
-    NodeId: str
-    StakingBlockNum: int
-    DelegateEpoch: int
-    Released: int
-    ReleasedHes: int
-    RestrictingPlan: int
-    RestrictingPlanHes: int
-    CumulativeIncome: int
 
 
 class Delegate(Module):
@@ -28,7 +14,7 @@ class Delegate(Module):
         self._module_type = 'inner-contract'
         self._result_type = 'event'
         self._get_node_info()
-        self._economic = economic if economic else Economic(web3)
+        self._economic = new_economic(web3.debug.economic_config()) if not economic and hasattr(web3, 'debug') else economic
 
     @property
     def _staking_block_number(self):
@@ -87,7 +73,7 @@ class Delegate(Module):
         if delegate_info == 'Query delegate info failed:Delegate info is not found':
             return None
         else:
-            return _DelegateInfo(delegate_info)
+            return DelegateInfo(delegate_info)
 
     def get_delegate_list(self, address=None):
         """ 获取地址的全部委托信息
@@ -99,7 +85,7 @@ class Delegate(Module):
         if delegate_list == 'Retreiving delegation related mapping failed:RelatedList info is not found':
             return None
         else:
-            return [_DelegateInfo(delegate_info) for delegate_info in delegate_list]
+            return [DelegateInfo(delegate_info) for delegate_info in delegate_list]
 
     @contract_transaction
     def withdraw_delegate_reward(self,
@@ -120,3 +106,17 @@ class Delegate(Module):
             address = address or self.default_account.address
         node_ids = node_ids or []
         return self.web3.ppos.delegate.get_delegate_reward(address, node_ids)
+
+
+class DelegateInfo(AttributeDict):
+    """ 委托信息的属性字典类
+    """
+    Addr: str
+    NodeId: str
+    StakingBlockNum: int
+    DelegateEpoch: int
+    Released: int
+    ReleasedHes: int
+    RestrictingPlan: int
+    RestrictingPlanHes: int
+    CumulativeIncome: int
