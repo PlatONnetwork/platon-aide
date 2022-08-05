@@ -54,7 +54,7 @@ class RewardData:
     newBlockRate: int
     platonFoundationYear: int
     increaseIssuanceRatio: int
-    TheNumberOfDelegationsReward: int
+    theNumberOfDelegationsReward: int
 
 
 @dataclass
@@ -65,12 +65,11 @@ class RestrictingData:
 @dataclass
 class Economic:
     common: CommonData
-
-    # restricting: RestrictingData
-    # staking: StakingData
-    # gov: GovernData
-    # reward: RewardData
-    # slashing: SlashingData
+    restricting: RestrictingData
+    staking: StakingData
+    gov: GovernData
+    reward: RewardData
+    slashing: SlashingData
 
     # 区块
     @property
