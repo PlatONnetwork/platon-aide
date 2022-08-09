@@ -1,4 +1,5 @@
 import functools
+import json
 import os
 import sys
 from os.path import abspath
@@ -9,6 +10,7 @@ from hexbytes import HexBytes
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon._utils.inner_contract import InnerContractEvent
 from platon._utils.threads import Timeout
+from platon.exceptions import ContractLogicError
 from platon.types import BlockData
 from platon_account._utils.signing import to_standard_signature_bytes
 from platon_hash.auto import keccak
@@ -116,15 +118,33 @@ def contract_transaction(func):
         if not txn.get('from'):
             txn['from'] = account.address
 
-        # solidity合约方法不传入private key参数，避免abi解析问题
         if func.__name__ == 'fit_func':
-            txn = func(self, *args, **kwargs).build_transaction(txn)
+            # solidity合约方法不传入private key参数，避免abi解析问题
+            fn = func(self, *args, **kwargs)
         else:
-            txn = func(self, *args, private_key=private_key, **kwargs).build_transaction(txn)
+            # 内置合约
+            fn = func(self, *args, private_key=private_key, **kwargs)
 
+        # 预估gas出现合约逻辑错误时，不再报错，而是返回data信息
+        # 在txn中指定gas，可以跳过该步骤（避免出现太多种返回值）
+        try:
+            txn = fn.build_transaction(txn)
+        except ContractLogicError as e:
+            err = str(e)
+            if err.startswith('inner contract exec failed: '):
+                event = err.split('inner contract exec failed: ')[1]
+                from platon_aide.base import Event
+                return Event(json.loads(event.replace('\'', '"')))
+            return err
+
+        # 直接返回txn
         if self._result_type == 'txn':
             return txn
-        return self.send_transaction(txn, private_key, self._result_type)
+
+        try:
+            return self.send_transaction(txn, private_key, self._result_type)
+        except ContractLogicError as e:
+            return e
 
     return wrapper
 
@@ -185,7 +205,7 @@ def mock_duplicate_sign(dtype, sk, blskey, block_number, epoch=0, view_number=0,
     else:
         tool_file = abspath("tool/win/duplicateSign.exe")
     print("{} -dtype={} -sk={} -blskey={} -blockNumber={} -epoch={} -viewNumber={} -blockIndex={} -vindex={}".format(
-            tool_file, dtype, sk, blskey, block_number, epoch, view_number, block_index, index))
+        tool_file, dtype, sk, blskey, block_number, epoch, view_number, block_index, index))
     output = run(
         "{} -dtype={} -sk={} -blskey={} -blockNumber={} -epoch={} -viewNumber={} -blockIndex={} -vindex={}".format(
             tool_file, dtype, sk, blskey, block_number, epoch, view_number, block_index, index))

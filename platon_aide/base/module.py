@@ -1,6 +1,7 @@
 import warnings
 from platon import Account
 from platon import Web3
+from platon.datastructures import AttributeDict
 from platon_typing import Address
 
 from platon_aide.utils import send_transaction, get_transaction_result
@@ -59,3 +60,8 @@ class Module:
             result_type = 'receipt'
 
         self._result_type = result_type
+
+
+class Event(AttributeDict):
+    code: int
+    message: str
