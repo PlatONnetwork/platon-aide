@@ -94,7 +94,8 @@ def get_transaction_result(web3: Web3, tx_hash, result_type):
     if result_type == 'receipt':
         return receipt
     if result_type == 'event':
-        return InnerContractEvent.get_event(receipt)
+        from platon_aide.base import Event
+        return Event(InnerContractEvent.get_event(receipt))
 
 
 def contract_call(func):

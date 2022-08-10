@@ -2,7 +2,8 @@ import time
 
 from platon.main import get_default_modules
 from platon.middleware import gplaton_poa_middleware
-
+from platon_account import Account, DEFAULT_HRP
+from platon_utils import to_bech32_address, to_checksum_address, combomethod
 from platon_aide.calculator import Calculator
 from platon_aide.contract import Contract
 from platon_aide.delegate import Delegate
@@ -33,6 +34,7 @@ def get_modules(exclude: list = None):
 class Aide:
     """ 主类，platon各个子模块的集合体，同时支持创建账户、解码等非交易类的操作
     """
+    hrp: str = ''
 
     def __init__(self,
                  uri: str,
@@ -87,19 +89,38 @@ class Aide:
         self.govern.set_result_type(result_type)
         self.contract.set_result_type(result_type)
 
-    def create_account(self):
+    @combomethod
+    def create_account(self, hrp=None):
         """ 创建账户
         """
-        account = self.platon.account.create(hrp=self.hrp)
-        address = account.address
-        private_key = account.privateKey.hex()[2:]
-        return address, private_key
+        hrp = hrp or self.hrp or DEFAULT_HRP
+        return Account.create(hrp=hrp)
 
-    def create_hd_account(self):
+    @combomethod
+    def create_hd_account(self, hrp=None):
         """ 创建HD账户
         """
-        # todo: coding
         pass
+
+    @combomethod
+    def create_keystore(self, passphrase, key=None):
+        """ 创建钱包文件
+        """
+        pass
+
+    @combomethod
+    def to_bech32_address(self, address, hrp=None):
+        """ 任意地址转换为platon形式的bech32地址
+        注意：非标准bech32地址
+        """
+        hrp = hrp or self.hrp or DEFAULT_HRP
+        return to_bech32_address(address, hrp=hrp)
+
+    @combomethod
+    def to_checksum_address(self, address):
+        """ 任意地址转换为checksum地址
+        """
+        return to_checksum_address(address)
 
     def wait_block(self, to_block=None, interval=3):
         """ 等待块高
