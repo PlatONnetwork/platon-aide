@@ -142,10 +142,7 @@ def contract_transaction(func):
         if self._result_type == 'txn':
             return txn
 
-        try:
-            return self.send_transaction(txn, private_key, self._result_type)
-        except ContractLogicError as e:
-            return e
+        return self.send_transaction(txn, private_key, self._result_type)
 
     return wrapper
 

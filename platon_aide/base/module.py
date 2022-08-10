@@ -27,7 +27,7 @@ class Module:
     def _get_node_info(self):
         if hasattr(self.web3.node, 'admin'):
             node_info = self.web3.node.admin.node_info()
-            # self._node_id = node_info['id']                                # todo: 增加不使用id字段的注释
+            # self._node_id = node_info['id']       # todo: 增加不使用id字段的注释
             self._node_id = node_info['enode'].split('//')[1].split('@')[0]  # 请使用enode中的节点
             self._bls_pubkey = node_info['blsPubKey']
             self._bls_proof = self.web3.node.admin.get_schnorr_NIZK_prove()

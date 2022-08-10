@@ -42,12 +42,12 @@ class Aide:
                  chain_id: int = None,
                  hrp: str = None,
                  economic: Economic = None,
-                 closed_api: list = None,
+                 exclude_api: list = None,
                  ):
         self.uri = uri
         self.gql_uri = gql_uri
         # web3相关设置
-        modules = get_modules(closed_api)
+        modules = get_modules(exclude_api)
         self.web3 = get_web3(uri, chain_id, hrp, modules=modules)
         self.web3.middleware_onion.inject(gplaton_poa_middleware, layer=0)
         self.hrp = hrp or self.web3.hrp
@@ -122,13 +122,23 @@ class Aide:
         """
         return to_checksum_address(address)
 
-    def wait_block(self, to_block=None, interval=3):
+    def wait_block(self, to_block, time_out=None):
         """ 等待块高
         """
         current_block = self.platon.block_number
-        while current_block < to_block:
-            time.sleep(interval)
+        time_out = time_out or (to_block - current_block) * 3
+
+        for i in range(time_out):
+            time.sleep(1)
             current_block = self.platon.block_number
+
+            if i // 10 == 0:
+                print(f'{current_block} ==> {to_block}')
+
+            if current_block >= to_block:
+                return
+
+        raise TimeoutError('wait block timeout!')
 
     def ec_recover(self, block_identifier):
         """ 获取出块节点公钥
