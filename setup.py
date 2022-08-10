@@ -6,7 +6,7 @@ from setuptools import (
 
 deps = {
     'platon-aide': [
-        'platon.py>=1.2.0',
+        'platon.py>=1.3.0',
         'platon_account>=1.2.0',
         'platon_hash>=1.2.0',
         'platon_keys>=1.2.0',
@@ -23,7 +23,7 @@ with open('./README.md', encoding='utf-8') as readme:
 setup(
     name='platon-aide',
     # *IMPORTANT*: Don't manually change the version here. Use the 'bumpversion' utility.
-    version='1.2.15',
+    version='1.3.0',
     description="""An aide that helps you quickly access the platon chain and use its basic functions.""",
     long_description=long_description,
     long_description_content_type='text/markdown',
