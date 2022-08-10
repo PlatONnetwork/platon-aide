@@ -56,6 +56,16 @@ class Delegate(Module):
                                                          amount,
                                                          )
 
+    @contract_transaction
+    def redeem_delegate(self,
+                        txn=None,
+                        private_key=None,
+                        ):
+        """
+        领取已经解锁的委托金
+        """
+        return self.web3.ppos.delegate.redeem_delegate()
+
     def get_delegate_info(self,
                           address=None,
                           node_id=None,
@@ -74,6 +84,21 @@ class Delegate(Module):
             return None
         else:
             return DelegateInfo(delegate_info)
+
+    def get_delegate_lock_info(self,
+                               address=None,
+                               ):
+        """ 获取地址处于锁定期的委托信息
+        """
+        if self.default_account:
+            address = address or self.default_account.address
+
+        delegate_lock_info = self.web3.ppos.delegate.get_delegate_lock_info(address)
+        # todo: 根据实际情况补全
+        if delegate_lock_info == 'Query delegate info failed:Delegate info is not found':
+            return None
+        else:
+            return DelegateInfo(delegate_lock_info)
 
     def get_delegate_list(self, address=None):
         """ 获取地址的全部委托信息
@@ -120,3 +145,5 @@ class DelegateInfo(AttributeDict):
     RestrictingPlan: int
     RestrictingPlanHes: int
     CumulativeIncome: int
+    LockReleasedHes: int
+    LockRestrictingPlanHes: int
