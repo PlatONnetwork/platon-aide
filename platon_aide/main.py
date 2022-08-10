@@ -1,5 +1,6 @@
 import time
 
+from loguru import logger
 from platon.main import get_default_modules
 from platon.middleware import gplaton_poa_middleware
 from platon_account import Account, DEFAULT_HRP
@@ -133,7 +134,7 @@ class Aide:
             current_block = self.platon.block_number
 
             if i // 10 == 0:
-                print(f'{current_block} ==> {to_block}')
+                logger.info('{current_block} ==> {to_block}')
 
             if current_block >= to_block:
                 return
