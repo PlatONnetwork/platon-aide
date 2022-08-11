@@ -23,10 +23,16 @@ class Calculator:
         verifier_list = self.web3.ppos.staking.get_verifier_list()
         return len(verifier_list)
 
-    def get_blocks_from_miner(self, start=None, end=None, node_id=None):
+    def get_blocks_from_miner(self, node_id, start=None, end=None):
         """ 获取节点出块数
         """
         block_count = 0
+
+        if not start:
+            start = 0
+        if not end:
+            end = self.web3.platon.block_number
+
         for bn in range(start, end):
             block = self.web3.platon.get_block(bn)
             public_key = ec_recover(block)
