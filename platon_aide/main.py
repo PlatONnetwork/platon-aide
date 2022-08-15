@@ -133,8 +133,8 @@ class Aide:
             time.sleep(1)
             current_block = self.platon.block_number
 
-            if i // 10 == 0:
-                logger.info('{current_block} ==> {to_block}')
+            if i % 10 == 0:
+                logger.info(f'waiting block: {current_block} -> {to_block}')
 
             if current_block >= to_block:
                 return

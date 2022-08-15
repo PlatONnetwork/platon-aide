@@ -90,8 +90,7 @@ class Delegate(Module):
                                ):
         """ 获取地址处于锁定期的委托信息
         """
-        if self.default_account:
-            address = address or self.default_account.address
+        address = address or self.default_account.address
 
         delegate_lock_info = self.web3.ppos.delegate.get_delegate_lock_info(address)
         # todo: 根据实际情况补全
@@ -108,7 +107,7 @@ class Delegate(Module):
         # return self.web3.ppos.delegate.get_delegate_list(address)
         delegate_list = self.web3.ppos.delegate.get_delegate_list(address)
         if delegate_list == 'Retreiving delegation related mapping failed:RelatedList info is not found':
-            return None
+            return []
         else:
             return [DelegateInfo(delegate_info) for delegate_info in delegate_list]
 
