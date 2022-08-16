@@ -92,27 +92,27 @@ class Calculator:
         return start_bn, end_bn
 
     def get_reward_info(self):
-        """ 获取当前结算周期的奖励信息（该奖励信息每个增发周期更新一次）
+        """ 获取当前结算周期的奖励信息
         """
         total_staking_reward = self.web3.ppos.staking.get_staking_reward()
         per_block_reward = self.web3.ppos.staking.get_block_reward()
         return total_staking_reward, per_block_reward
 
-    def get_node_reward(self, node_id):
-        """ 即时计算上一个结算周期，节点的总奖励（交易gas奖励除外）
-        """
-        total_staking_reward = self.web3.ppos.staking.get_staking_reward()
-        verifier_count = self.get_verifier_count()
-        per_block_reward = self.web3.ppos.staking.get_block_reward()
-        # 获取上一个结算周期内，节点的出块数
-        epoch, _, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
-        start_bn, end_bn = self.get_period_ends(epoch - 1)
-        block_count = self.get_block_count(node_id, start_bn, end_bn)
-        self.calc_node_reward(total_staking_reward,
-                              verifier_count,
-                              per_block_reward,
-                              block_count
-                              )
+    # def get_node_reward(self, node_id):
+    #     """ 即时计算上一个结算周期，节点的总奖励
+    #     """
+    #     total_staking_reward = self.web3.ppos.staking.get_staking_reward()
+    #     verifier_count = self.get_verifier_count()
+    #     per_block_reward = self.web3.ppos.staking.get_block_reward()
+    #     # 获取上一个结算周期内，节点的出块数
+    #     epoch, _, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
+    #     start_bn, end_bn = self.get_period_ends(epoch - 1)
+    #     block_count = self.get_block_count(node_id, start_bn, end_bn)
+    #     self.calc_node_reward(total_staking_reward,
+    #                           verifier_count,
+    #                           per_block_reward,
+    #                           block_count
+    #                           )
 
     @staticmethod
     def calc_node_reward(total_staking_reward,
@@ -133,25 +133,25 @@ class Calculator:
         node_reward = staking_reward + block_reward
         return node_reward
 
-    def get_staking_reward(self, node_id):
-        """ 即时计算上一个结算周期，节点的质押奖励
-        """
-        total_staking_reward = self.web3.ppos.staking.get_staking_reward()
-        verifier_count = self.get_verifier_count()
-        per_block_reward = self.web3.ppos.staking.get_block_reward()
-        # 获取上一个结算周期内，节点的出块数
-        epoch, _, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
-        start_bn, end_bn = self.get_period_ends(epoch - 1)
-        block_count = self.get_block_count(node_id, start_bn, end_bn)
-
-        node_reward_ratio = self._staking.get_candidate_info(node_id).RewardPer
-
-        return self.calc_staking_reward(total_staking_reward,
-                                        verifier_count,
-                                        per_block_reward,
-                                        block_count,
-                                        node_reward_ratio,
-                                        )
+    # def get_staking_reward(self, node_id):
+    #     """ 即时计算上一个结算周期，节点的质押奖励
+    #     """
+    #     total_staking_reward = self.web3.ppos.staking.get_staking_reward()
+    #     verifier_count = self.get_verifier_count()
+    #     per_block_reward = self.web3.ppos.staking.get_block_reward()
+    #     # 获取上一个结算周期内，节点的出块数
+    #     epoch, _, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
+    #     start_bn, end_bn = self.get_period_ends(epoch - 1)
+    #     block_count = self.get_block_count(node_id, start_bn, end_bn)
+    #
+    #     node_reward_ratio = self._staking.get_candidate_info(node_id).RewardPer
+    #
+    #     return self.calc_staking_reward(total_staking_reward,
+    #                                     verifier_count,
+    #                                     per_block_reward,
+    #                                     block_count,
+    #                                     node_reward_ratio,
+    #                                     )
 
     @staticmethod
     def calc_staking_reward(epoch_staking_reward,
@@ -174,37 +174,37 @@ class Calculator:
         block_reward = Decimal(epoch_block_reward) * Decimal(block_count)
         return int(staking_reward), int(block_reward)
 
-    def get_delegate_reward(self,
-                            node_id,
-                            delegate_amount,
-                            delegate_total_amount,
-                            ):
-        """
-        即时计算上一个结算周期，账户在节点的委托奖励
-
-        Args:
-            node_id: 委托节点ID
-            delegate_amount: 结算周期内，账户在节点的锁定期委托总额
-            delegate_total_amount: 节点在该结算周期的锁定期委托总额
-        """
-        total_staking_reward = self.web3.ppos.staking.get_staking_reward()
-        verifier_count = self.get_verifier_count()
-        per_block_reward = self.web3.ppos.staking.get_block_reward()
-        # 获取上一个结算周期内，委托节点的出块数
-        epoch, _, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
-        start_bn, end_bn = self.get_period_ends(epoch - 1)
-        block_count = self.get_block_count(node_id, start_bn, end_bn)
-
-        node_reward_ratio = self._staking.get_candidate_info(node_id).RewardPer
-
-        return self.calc_delegate_reward(total_staking_reward,
-                                         verifier_count,
-                                         per_block_reward,
-                                         block_count,
-                                         node_reward_ratio,
-                                         delegate_total_amount,
-                                         delegate_amount,
-                                         )
+    # def get_delegate_reward(self,
+    #                         node_id,
+    #                         delegate_amount,
+    #                         delegate_total_amount,
+    #                         ):
+    #     """
+    #     即时计算上一个结算周期，账户在节点的委托奖励
+    #
+    #     Args:
+    #         node_id: 委托节点ID
+    #         delegate_amount: 结算周期内，账户在节点的锁定期委托总额
+    #         delegate_total_amount: 节点在该结算周期的锁定期委托总额
+    #     """
+    #     total_staking_reward = self.web3.ppos.staking.get_staking_reward()
+    #     verifier_count = self.get_verifier_count()
+    #     per_block_reward = self.web3.ppos.staking.get_block_reward()
+    #     # 获取上一个结算周期内，委托节点的出块数
+    #     epoch, _, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
+    #     start_bn, end_bn = self.get_period_ends(epoch - 1)
+    #     block_count = self.get_block_count(node_id, start_bn, end_bn)
+    #
+    #     node_reward_ratio = self._staking.get_candidate_info(node_id).RewardPer
+    #
+    #     return self.calc_delegate_reward(total_staking_reward,
+    #                                      verifier_count,
+    #                                      per_block_reward,
+    #                                      block_count,
+    #                                      node_reward_ratio,
+    #                                      delegate_total_amount,
+    #                                      delegate_amount,
+    #                                      )
 
     @staticmethod
     def calc_delegate_reward(total_node_reward,
