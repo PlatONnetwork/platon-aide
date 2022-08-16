@@ -5,14 +5,15 @@ from platon.main import get_default_modules
 from platon.middleware import gplaton_poa_middleware
 from platon_account import Account, DEFAULT_HRP
 from platon_utils import to_bech32_address, to_checksum_address, combomethod
+from platon_aide.transfer import Transfer
+from platon_aide.restricting import Restricting
+from platon_aide.economic import new_economic, Economic
 from platon_aide.calculator import Calculator
 from platon_aide.contract import Contract
-from platon_aide.delegate import Delegate
-from platon_aide.economic import new_economic, Economic
-from platon_aide.govern import Govern
-from platon_aide.slashing import Slashing
 from platon_aide.staking import Staking
-from platon_aide.transfer import Transfer
+from platon_aide.delegate import Delegate
+from platon_aide.slashing import Slashing
+from platon_aide.govern import Govern
 from platon_aide.graphqls import Graphql
 from platon_aide.utils import get_web3, ec_recover
 
@@ -58,6 +59,7 @@ class Aide:
         self.economic = new_economic(self.debug.economic_config()) if self.debug else economic
         self.calculator = Calculator(self.web3, economic=self.economic)
         self.transfer = Transfer(self.web3)
+        self.restricting = Restricting(self.web3)
         self.staking = Staking(self.web3, economic=self.economic)
         self.delegate = Delegate(self.web3, economic=self.economic)
         self.slashing = Slashing(self.web3)
@@ -76,6 +78,7 @@ class Aide:
         """ 设置默认账户
         """
         self.transfer.set_default_account(account)
+        self.restricting.set_default_account(account)
         self.staking.set_default_account(account)
         self.delegate.set_default_account(account)
         self.slashing.set_default_account(account)
@@ -84,6 +87,7 @@ class Aide:
 
     def set_result_type(self, result_type):
         self.transfer.set_result_type(result_type)
+        self.restricting.set_result_type(result_type)
         self.staking.set_result_type(result_type)
         self.delegate.set_result_type(result_type)
         self.slashing.set_result_type(result_type)

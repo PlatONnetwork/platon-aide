@@ -56,7 +56,7 @@ class Module:
 
         if result_type == 'event' and self._module_type != 'inner-contract':
             warnings.warn(f'result type "event" only support inner contract, '
-                    f'try set {self.__class__.__name__} result type to "receipt"', RuntimeWarning)
+                          f'try set {self.__class__.__name__} result type to "receipt"', RuntimeWarning)
             result_type = 'receipt'
 
         self._result_type = result_type

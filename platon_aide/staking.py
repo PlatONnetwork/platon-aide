@@ -1,9 +1,9 @@
 from platon import Web3
 from platon.datastructures import AttributeDict
 
-from platon_aide.economic import Economic, new_economic
 from platon_aide.base.module import Module
 from platon_aide.utils import contract_transaction
+from platon_aide.economic import Economic, new_economic
 
 
 class Staking(Module):
