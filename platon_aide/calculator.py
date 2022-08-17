@@ -242,7 +242,7 @@ class Calculator(Module):
         dividend_ratio = Decimal(node_reward_ratio) / Decimal(10000)
         # 按照底层算法，计算质押奖励分红
         staking_reward = int(Decimal(total_staking_reward) / Decimal(verifier_count))
-        staking_dividends = Decimal(staking_reward) * dividend_ratio
+        staking_dividends = int(Decimal(staking_reward) * dividend_ratio)
         # 按照底层算法，计算出块奖励分红
         per_block_delegate_reward = Decimal(per_block_reward) * dividend_ratio
         block_dividends = per_block_delegate_reward * Decimal(block_count)
