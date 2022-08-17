@@ -1,6 +1,13 @@
 # platon-aide
 它是一个小助手，能够帮助您快速访问PlatON区块链，并使用其基本功能 
 
+
+# 安装方法
+```shell
+pip install platon_aide
+```
+
+
 # 使用方法
 ```python
 from platon_account import Account
