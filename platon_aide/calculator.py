@@ -1,6 +1,9 @@
+import math
+import warnings
 from decimal import Decimal
 from typing import Literal
 
+from loguru import logger
 from platon import Web3
 
 from platon_aide.base import Module
@@ -9,33 +12,30 @@ from platon_aide.economic import Economic, new_economic
 from platon_aide.staking import Staking
 
 
-class Calculator:
+class Calculator(Module):
 
     def __init__(self, web3: Web3, economic: Economic = None):
-        self.web3 = web3
-        self.economic = new_economic(web3.debug.economic_config()) if not economic and hasattr(web3, 'debug') else economic
+        super().__init__(web3)
+        self._economic = new_economic(web3.debug.economic_config()) if not economic and hasattr(web3, 'debug') else economic
+        self._staking = Staking(web3, economic=self._economic)
 
-    def get_verifier_count(self, epoch=None):
+    def get_verifier_count(self):
         """ 获取结算周期的验证人数
+        备注：目前链上只能获取当前结算周期的验证人数
         """
-        # todo: 无法获取历史增发周期的验证节点信息，需要底层改进实现逻辑自洽
-        # if not epoch:
-        #     epoch, _ = self.get_period_info(self.web3.platon.block_number, period_type='epoch')
-
         verifier_list = self.web3.ppos.staking.get_verifier_list()
         return len(verifier_list)
 
-    def get_blocks_from_miner(self, node_id, start=None, end=None):
+    def get_block_count(self, node_id, start_bn=None, end_bn=None):
         """ 获取节点出块数
         """
+        start_bn = start_bn or 0
+        end_bn = end_bn or self.web3.platon.block_number
+        if end_bn - start_bn > 1000:
+            warnings.warn('too many blocks to analyze, it will be a long wait')
+
         block_count = 0
-
-        if not start:
-            start = 0
-        if not end:
-            end = self.web3.platon.block_number
-
-        for bn in range(start, end):
+        for bn in range(start_bn, end_bn):
             block = self.web3.platon.get_block(bn)
             public_key = ec_recover(block)
             if node_id in public_key:
@@ -154,8 +154,7 @@ class Calculator:
     #                                     )
 
     @staticmethod
-    def calc_staking_reward(epoch_staking_reward,
-                            epoch_block_reward,
+    def calc_staking_reward(total_staking_reward,
                             verifier_count,
                             per_block_reward,
                             block_count,
@@ -165,14 +164,27 @@ class Calculator:
         计算一个结算周期，节点的质押奖励
 
         Args:
-            epoch_staking_reward: 结算周期的质押奖励，可以通过self.get_rewards_from_epoch获取
-            epoch_block_reward: 结算周期的出块奖励，可以通过self.get_rewards_from_epoch获取
-            verifier_count: 结算周期的验证人数
-            block_count: 节点在结算周期的出块数，可以通过self.get_blocks_from_miner获取
+            total_staking_reward: 结算周期的总质押奖励，可以通过self.get_reward_info获取
+            verifier_count: 结算周期的验证人数，可以通过self.get_verifier_count获取
+            per_block_reward: 结算周期的出块奖励，可以通过self.get_reward_info获取
+            block_count: 节点在结算周期的出块数，可以通过self.get_block_count获取
+            node_reward_ratio: 节点在结算周期的委托分红比例
         """
-        staking_reward = Decimal(epoch_staking_reward) / Decimal(verifier_count)
-        block_reward = Decimal(epoch_block_reward) * Decimal(block_count)
-        return int(staking_reward), int(block_reward)
+        node_reward = Calculator.calc_node_reward(total_staking_reward,
+                                                  verifier_count,
+                                                  per_block_reward,
+                                                  block_count,
+                                                  )
+
+        delegate_reward = Calculator.calc_delegate_reward(total_staking_reward,
+                                                          verifier_count,
+                                                          per_block_reward,
+                                                          block_count,
+                                                          node_reward_ratio,
+                                                          )
+
+        staking_reward = node_reward - delegate_reward
+        return staking_reward
 
     # def get_delegate_reward(self,
     #                         node_id,
@@ -207,10 +219,13 @@ class Calculator:
     #                                      )
 
     @staticmethod
-    def calc_delegate_reward(total_node_reward,
-                             delegate_reward_ratio,
-                             delegate_total_amount,
-                             delegate_amount,
+    def calc_delegate_reward(total_staking_reward,
+                             verifier_count,
+                             per_block_reward,
+                             block_count,
+                             node_reward_ratio,
+                             delegate_total_amount=None,
+                             delegate_amount=None,
                              ):
         """
         计算一个结算周期内，账户在节点的委托奖励
@@ -224,17 +239,28 @@ class Calculator:
             delegate_total_amount: 节点在结算周期的锁定期委托总额
             delegate_amount: 结算周期内，账户对节点的锁定期委托总额
         """
-        total_delegate_reward = Decimal(total_node_reward) * (Decimal(delegate_reward_ratio) / Decimal(10000))
-        per_delegate_reward = Decimal(total_delegate_reward) / Decimal(delegate_total_amount)
-        return int(per_delegate_reward * delegate_amount)
+        dividend_ratio = Decimal(node_reward_ratio) / Decimal(10000)
+        # 按照底层算法，计算质押奖励分红
+        staking_reward = int(Decimal(total_staking_reward) / Decimal(verifier_count))
+        staking_dividends = Decimal(staking_reward) * dividend_ratio
+        # 按照底层算法，计算出块奖励分红
+        per_block_delegate_reward = Decimal(per_block_reward) * dividend_ratio
+        block_dividends = per_block_delegate_reward * Decimal(block_count)
+        # 计算节点所有委托分红
+        all_delegate_reward = int(staking_dividends + block_dividends)
+        if not delegate_total_amount and not delegate_amount:
+            return all_delegate_reward
+        # 计算账户的委托分红
+        delegate_reward = math.floor(Decimal(all_delegate_reward) * Decimal(delegate_amount) / Decimal(delegate_total_amount))
+        return delegate_reward
 
     def calc_report_multi_sign_reward(self, staking_amount):
         """ 计算举报双签的奖励
         """
-        slashing_ratio = self.economic.slashing.slashFractionDuplicateSign
+        slashing_ratio = self._economic.slashing.slashFractionDuplicateSign
         slashing_amount = Decimal(staking_amount) * (Decimal(slashing_ratio) / 10000)
 
-        reward_ratio = self.economic.slashing.duplicateSignReportReward
+        reward_ratio = self._economic.slashing.duplicateSignReportReward
         report_reward = slashing_amount * (Decimal(reward_ratio) / 100)
 
         to_incentive_pool_amount = slashing_amount - report_reward
