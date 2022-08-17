@@ -168,10 +168,16 @@ class Economic:
         return (self.common.additionalCycleTime * 60) // self.epoch_time
 
     @property
-    def validator_count(self):
-        """ 共识验证人数量
+    def verifier_count(self):
+        """ 最大共识验证人数量
         """
         return self.common.maxConsensusVals
+
+    @property
+    def validator_count(self):
+        """ 最大验证人数量
+        """
+        return self.staking.maxValidators
 
     @property
     def staking_limit(self):

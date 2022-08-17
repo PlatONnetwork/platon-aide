@@ -53,13 +53,13 @@ class Calculator:
         """ 通过区块高度和周期类型，获取区块所在的周期数和周期结束块高
         """
         if period_type not in ['round', 'consensus', 'epoch', 'increasing']:
-            raise ValueError('unrecognized period type.')
+            raise ValueError('unknown period type.')
 
         blocks = {
             'round': self._economic.round_blocks,
             'consensus': self._economic.consensus_blocks,
             'epoch': self._economic.epoch_blocks,
-            'increasing': self._economic.round_blocks,
+            'increasing': self._economic.increasing_blocks,
         }
         period_blocks = blocks[period_type]
 
@@ -67,7 +67,7 @@ class Calculator:
             block_number = self.web3.platon.block_number
 
         period = math.ceil(block_number // period_blocks)
-        start_bn, end_bn = self.get_period_ends(period)
+        start_bn, end_bn = self.get_period_ends(period, period_type)
 
         return period, start_bn, end_bn
 
@@ -78,13 +78,13 @@ class Calculator:
         """ 通过周期数和周期类型，获取周期的起始结束块高
         """
         if period_type not in ['round', 'consensus', 'epoch', 'increasing']:
-            raise ValueError('unrecognized period type.')
+            raise ValueError('unknown period type.')
 
         blocks = {
             'round': self._economic.round_blocks,
             'consensus': self._economic.consensus_blocks,
             'epoch': self._economic.epoch_blocks,
-            'increasing': self._economic.round_blocks,
+            'increasing': self._economic.increasing_blocks,
         }
         period_blocks = blocks[period_type]
         start_bn, end_bn = (period - 1) * period_blocks + 1, period * period_blocks
