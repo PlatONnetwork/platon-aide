@@ -12,7 +12,7 @@ class Slashing(Module):
         self._result_type = 'event'
         self._get_node_info()
 
-    @contract_transaction
+    @contract_transaction()
     def report_duplicate_sign(self,
                               report_type,
                               data,

@@ -27,7 +27,7 @@ class Staking(Module):
             return candidate_info
         raise AttributeError('the node has no staking information.')
 
-    @contract_transaction
+    @contract_transaction()
     def create_staking(self,
                        amount=None,
                        balance_type=0,
@@ -63,7 +63,7 @@ class Staking(Module):
                                                      version, version_sign, bls_pubkey, bls_proof
                                                      )
 
-    @contract_transaction
+    @contract_transaction()
     def increase_staking(self,
                          balance_type=0,
                          node_id=None,
@@ -75,12 +75,12 @@ class Staking(Module):
         amount = amount or self._economic.add_staking_limit
         return self.web3.ppos.staking.increase_staking(node_id, balance_type, amount)
 
-    @contract_transaction
+    @contract_transaction()
     def withdrew_staking(self, node_id=None, txn=None, private_key=None):
         node_id = node_id or self._node_id
         return self.web3.ppos.staking.withdrew_staking(node_id)
 
-    @contract_transaction
+    @contract_transaction()
     def edit_candidate(self,
                        benifit_address=None,
                        node_id=None,

@@ -1,1 +1,1 @@
-from platon_aide.base.module import Module, Event
+from platon_aide.base.module import Module

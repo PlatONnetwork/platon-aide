@@ -21,7 +21,7 @@ class Delegate(Module):
         staking = Staking(self.web3)
         return staking.staking_info.StakingBlockNum
 
-    @contract_transaction
+    @contract_transaction()
     def delegate(self,
                  amount=None,
                  balance_type=0,
@@ -35,7 +35,7 @@ class Delegate(Module):
         node_id = node_id or self._node_id
         return self.web3.ppos.delegate.delegate(node_id, balance_type, amount)
 
-    @contract_transaction
+    @contract_transaction(1005)
     def withdrew_delegate(self,
                           amount=0,
                           staking_block_identifier=None,
@@ -56,7 +56,7 @@ class Delegate(Module):
                                                          amount,
                                                          )
 
-    @contract_transaction
+    @contract_transaction(1006)
     def redeem_delegate(self,
                         txn=None,
                         private_key=None,
@@ -111,7 +111,7 @@ class Delegate(Module):
         else:
             return [DelegateInfo(delegate_info) for delegate_info in delegate_list]
 
-    @contract_transaction
+    @contract_transaction(5000)
     def withdraw_delegate_reward(self,
                                  txn=None,
                                  private_key=None,

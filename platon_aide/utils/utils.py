@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from os.path import abspath
+from typing import cast
 
 import rlp
 from hexbytes import HexBytes
@@ -10,8 +11,9 @@ from hexbytes import HexBytes
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
 from platon._utils.inner_contract import InnerContractEvent
 from platon._utils.threads import Timeout
+from platon.datastructures import AttributeDict
 from platon.exceptions import ContractLogicError
-from platon.types import BlockData
+from platon.types import BlockData, CodeData
 from platon_account._utils.signing import to_standard_signature_bytes
 from platon_hash.auto import keccak
 from platon_keys.datatypes import Signature
@@ -93,9 +95,7 @@ def get_transaction_result(web3: Web3, tx_hash, result_type):
         receipt = receipt.decode('utf-8')
     if result_type == 'receipt':
         return receipt
-    if result_type == 'event':
-        from platon_aide.base import Event
-        return Event(InnerContractEvent.get_event(receipt))
+    raise ValueError(f'unknown result type: {result_type}')
 
 
 def contract_call(func):
@@ -106,45 +106,59 @@ def contract_call(func):
     return wrapper
 
 
-def contract_transaction(func):
+def contract_transaction(func_id=None):
     """ todo: 增加注释
     """
 
-    @functools.wraps(func)
-    def wrapper(self, *args, txn=None, private_key=None, **kwargs):
-        # 预填充from地址，避免预估gas时地址相关检验不通过
-        account = self.web3.platon.account.from_key(private_key, hrp=self.web3.hrp) if private_key else self.default_account
-        if not txn:
-            txn = {}
-        if not txn.get('from'):
-            txn['from'] = account.address
+    def out_wrapper(func):
 
-        if func.__name__ == 'fit_func':
-            # solidity合约方法不传入private key参数，避免abi解析问题
-            fn = func(self, *args, **kwargs)
-        else:
-            # 内置合约
-            fn = func(self, *args, private_key=private_key, **kwargs)
+        @functools.wraps(func)
+        def wrapper(self, *args, txn=None, private_key=None, **kwargs):
+            # 预填充from地址，避免预估gas时地址相关检验不通过
+            account = self.web3.platon.account.from_key(private_key, hrp=self.web3.hrp) if private_key else self.default_account
+            if not txn:
+                txn = {}
+            if not txn.get('from'):
+                txn['from'] = account.address
 
-        # 预估gas出现合约逻辑错误时，不再报错，而是返回data信息
-        # 在txn中指定gas，可以跳过该步骤（避免出现太多种返回值）
-        try:
-            txn = fn.build_transaction(txn)
-        except ContractLogicError as e:
-            err = str(e)
-            if err.startswith('inner contract exec failed: '):
-                event = err.split('inner contract exec failed: ')[1]
-                from platon_aide.base import Event
-                return Event(json.loads(event.replace('\'', '"')))
-            return err
+            if func.__name__ == 'fit_func':
+                # solidity合约方法不传入private key参数，避免abi解析问题
+                fn = func(self, *args, **kwargs)
+            else:
+                # 内置合约
+                fn = func(self, *args, private_key=private_key, **kwargs)
 
-        # 直接返回txn
-        if self._result_type == 'txn':
-            return txn
+            # 预估gas出现合约逻辑错误时，不再报错，而是返回data信息
+            # 在txn中指定gas，可以跳过该步骤（避免出现太多种返回值）
+            try:
+                txn = fn.build_transaction(txn)
+            except ContractLogicError as e:
+                err = str(e)
+                if err.startswith('inner contract exec failed: '):
+                    event = err.split('inner contract exec failed: ')[1]
+                    data = json.loads(event.replace('\'', '"'))
+                    return cast(CodeData, AttributeDict.recursive(data))
+                return err
 
-        return self.send_transaction(txn, private_key, self._result_type)
+            # 直接返回txn
+            if self._result_type == 'txn':
+                return txn
 
-    return wrapper
+            if self._result_type == 'receipt' or self._result_type == 'hash':
+                return self.send_transaction(txn, private_key, self._result_type)
+
+            if self._result_type == 'event':
+                if self._module_type != 'inner-contract':
+                    raise TypeError('result type "event" only support inner contract')
+
+                receipt = self.send_transaction(txn, private_key, 'receipt')
+                return InnerContractEvent(func_id).processReceipt(receipt)
+
+            raise ValueError(f'unknown result type: {self._result_type}')
+
+        return wrapper
+
+    return out_wrapper
 
 
 def ec_recover(block: BlockData):

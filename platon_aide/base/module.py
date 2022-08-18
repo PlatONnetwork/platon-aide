@@ -42,12 +42,6 @@ class Module:
             private_key = self.default_account.privateKey.hex()[2:]
 
         tx_hash = send_transaction(self.web3, txn, private_key)
-        return self._get_transaction_result(tx_hash, result_type)
-
-    def _get_transaction_result(self, tx_hash, result_type):
-        if result_type == 'event' and self._module_type != 'inner-contract':
-            raise TypeError('result type "event" only support inner contract')
-
         return get_transaction_result(self.web3, tx_hash, result_type)
 
     def set_result_type(self, result_type):
@@ -60,8 +54,3 @@ class Module:
             result_type = 'receipt'
 
         self._result_type = result_type
-
-
-class Event(AttributeDict):
-    code: int
-    message: str

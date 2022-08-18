@@ -12,7 +12,7 @@ class Restricting(Module):
         self._module_type = 'inner-contract'
         self._result_type = 'event'
 
-    @contract_transaction
+    @contract_transaction()
     def restricting(self, release_address, plans, txn=None, private_key=None):
         return self.web3.restricting.create_restricting(release_address, plans)
 

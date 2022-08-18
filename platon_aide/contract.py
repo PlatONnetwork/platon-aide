@@ -104,7 +104,7 @@ class Contract(Module):
         if fn_abi.get('stateMutability') in ['view', 'pure']:
             return partial(contract_call(fit_func), self)
         else:
-            return partial(contract_transaction(fit_func), self)
+            return partial(contract_transaction()(fit_func), self)
 
     @staticmethod
     def _event_wrap(func):
@@ -117,4 +117,4 @@ class Contract(Module):
 
     @staticmethod
     def _fallback_wrap(func):
-        return contract_transaction(func)
+        return contract_transaction()(func)
