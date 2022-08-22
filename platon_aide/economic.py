@@ -109,7 +109,7 @@ class Economic:
     def consensus_rounds(self):
         """ 共识轮窗口期数量
         """
-        return self.validator_count
+        return self.verifier_count
 
     # 结算周期
     @property
