@@ -31,9 +31,20 @@ data = {"common":{"maxEpochMinutes":3,"nodeBlockTimeWindow":10,"perRoundBlocks":
 economic = new_economic(data)
 aide = Aide(uri, economic=economic, exclude_api=['admin', 'debug'])
 
+
+"""
+交易签名部分
+"""
 # 设置默认账户，后续使用aide发交易，如果不指定私钥，则都会使用默认账户签名交易
 account = Account.from_key('f51ca759562e1daf9e5302d121f933a8152915d34fcbc27e542baf256b5e4b74', aide.hrp)
 aide.set_default_account(account)
+to_account = Account.create(hrp='lat')
+print(aide.transfer.transfer(to_account.address, 10 * 10 ** 18))
+
+# 使用特定私钥签名，附带自主指定交易信息方法
+txn = {'gas': 21000, 'gasPrice': 1 * 10 ** 9, 'nonce': 100}
+private_key = 'f51ca759562e1daf9e5302d121f933a8152915d34fcbc27e542baf256b5e4b74'
+print(aide.transfer.transfer(to_account.address, 10 * 10 ** 18, txn=txn, private_key=private_key))
 
 
 """
