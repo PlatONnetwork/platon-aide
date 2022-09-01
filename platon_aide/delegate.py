@@ -97,7 +97,7 @@ class Delegate(Module):
         if delegate_lock_info == 'Query delegate info failed:Delegate info is not found':
             return None
         else:
-            return DelegateInfo(delegate_lock_info)
+            return delegate_lock_info
 
     def get_delegate_list(self, address=None):
         """ 获取地址的全部委托信息
