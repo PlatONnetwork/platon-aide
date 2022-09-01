@@ -140,7 +140,8 @@ class Aide:
             if i % 10 == 0:
                 logger.info(f'waiting block: {current_block} -> {to_block}')
 
-            if current_block >= to_block:
+            # 等待确定落链
+            if current_block > to_block:
                 return
 
         raise TimeoutError('wait block timeout!')
