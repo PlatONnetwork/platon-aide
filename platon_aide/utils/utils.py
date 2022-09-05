@@ -106,14 +106,14 @@ def contract_call(func):
     return wrapper
 
 
-def contract_transaction(func_id=None):
+def contract_transaction(func_id=None, default_txn=None):
     """ todo: 增加注释
     """
 
     def out_wrapper(func):
 
         @functools.wraps(func)
-        def wrapper(self, *args, txn=None, private_key=None, **kwargs):
+        def wrapper(self, *args, txn=default_txn, private_key=None, **kwargs):
             # 预填充from地址，避免预估gas时地址相关检验不通过
             account = self.web3.platon.account.from_key(private_key, hrp=self.web3.hrp) if private_key else self.default_account
             if not txn:

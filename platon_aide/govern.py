@@ -62,55 +62,55 @@ class Govern(Module):
             'patch': version_bytes[2],
         })
 
-    @contract_transaction()
+    @contract_transaction(default_txn={'gasPrice': versionGasPrice})
     def version_proposal(self,
                          version: int,
                          voting_rounds: int = 4,
                          pip_number: str = second(),
                          node_id: Union[NodeID, HexStr] = None,
-                         txn: dict = None,
-                         private_key: Union[bytes, HexStr] = None,
+                         txn=None,
+                         private_key=None,
                          ):
         """ 提交版本提案，实现链上共识硬分叉版本的升级
         """
         node_id = node_id or self._node_id
         return self.web3.pip.submit_version_proposal(node_id, pip_number, version, voting_rounds)
 
-    @contract_transaction()
+    @contract_transaction(default_txn={'gasPrice': paramGasPrice})
     def param_proposal(self,
                        module: str,
                        name: str,
                        value: str,
                        pip_number: str = second(),
                        node_id: Union[NodeID, HexStr] = None,
-                       txn: dict = None,
-                       private_key: Union[bytes, HexStr] = None,
+                       txn=None,
+                       private_key=None,
                        ):
         """ 提交参数提案，修改链上可治理参数
         """
         node_id = node_id or self._node_id
         return self.web3.pip.submit_param_proposal(node_id, pip_number, module, name, value)
 
-    @contract_transaction()
+    @contract_transaction(default_txn={'gasPrice': cancelGasPrice})
     def cancel_proposal(self,
                         proposal_id: str,
                         voting_rounds: int = 4,
                         node_id: Union[NodeID, HexStr] = None,
                         pip_number: str = second(),
-                        txn: dict = None,
-                        private_key: Union[bytes, HexStr] = None,
+                        txn=None,
+                        private_key=None,
                         ):
         """ 提交取消提案
         """
         node_id = node_id or self._node_id
         return self.web3.pip.submit_cancel_proposal(node_id, pip_number, voting_rounds, proposal_id)
 
-    @contract_transaction()
+    @contract_transaction(default_txn={'gasPrice': textGasPrice})
     def text_proposal(self,
                       pip_number: str = second(),
                       node_id: Union[NodeID, HexStr] = None,
-                      txn: dict = None,
-                      private_key: Union[bytes, HexStr] = None,
+                      txn=None,
+                      private_key=None,
                       ):
         """ 提交文本提案，文本提案不对链上产生影响，仅做pip投票意见收集作用
         """
@@ -124,8 +124,8 @@ class Govern(Module):
              node_id: Union[NodeID, HexStr] = None,
              version: int = None,
              version_sign: Union[bytes, HexStr] = None,
-             txn: dict = None,
-             private_key: Union[bytes, HexStr] = None,
+             txn=None,
+             private_key=None,
              ):
         """ 对提案进行投票
         """
@@ -139,8 +139,8 @@ class Govern(Module):
                         node_id: Union[NodeID, HexStr] = None,
                         version: int = None,
                         version_sign: Union[bytes, HexStr] = None,
-                        txn: dict = None,
-                        private_key: Union[bytes, HexStr] = None,
+                        txn=None,
+                        private_key=None,
                         ):
         """ 向链上声明节点版本，以获得参与共识出块的资格
         """
