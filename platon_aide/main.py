@@ -1,4 +1,5 @@
 import time
+from typing import Literal
 
 from loguru import logger
 from platon.main import get_default_modules
@@ -142,9 +143,21 @@ class Aide:
 
             # 等待确定落链
             if current_block > to_block:
+                logger.info(f'waiting block: {current_block} -> {to_block}')
                 return
 
         raise TimeoutError('wait block timeout!')
+
+    def wait_period(self,
+                    period_type: Literal['round', 'consensus', 'epoch', 'increasing'] = 'epoch',
+                    wait_count: int = 1,
+                    ):
+        """ 基于当前块高，等待n个指定周期
+        """
+        current_period, _, _ = self.calculator.get_period_info(period_type=period_type)
+        dest_period = current_period + wait_count - 1  # 去掉当前的指定周期
+        _, end_block = self.calculator.get_period_ends(dest_period)
+        self.wait_block(end_block)
 
     def ec_recover(self, block_identifier):
         """ 获取出块节点公钥

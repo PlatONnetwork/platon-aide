@@ -66,10 +66,10 @@ class Calculator(Module):
         if not block_number:
             block_number = self.web3.platon.block_number
 
-        period = math.ceil(block_number // period_blocks)
-        start_bn, end_bn = self.get_period_ends(period, period_type)
+        period = math.ceil(block_number / period_blocks)
+        start_block, end_block = self.get_period_ends(period, period_type)
 
-        return period, start_bn, end_bn
+        return period, start_block, end_block
 
     def get_period_ends(self,
                         period,
@@ -87,9 +87,9 @@ class Calculator(Module):
             'increasing': self._economic.increasing_blocks,
         }
         period_blocks = blocks[period_type]
-        start_bn, end_bn = (period - 1) * period_blocks + 1, period * period_blocks
+        start_block, end_block = (period - 1) * period_blocks + 1, period * period_blocks
 
-        return start_bn, end_bn
+        return start_block, end_block
 
     def get_reward_info(self):
         """ 获取当前结算周期的奖励信息

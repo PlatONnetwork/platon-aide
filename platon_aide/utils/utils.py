@@ -42,7 +42,7 @@ def get_web3(uri, chain_id=None, hrp=None, timeout=10, modules=None):
             web3 = Web3(provider(uri), chain_id=chain_id, hrp=hrp, modules=modules)
             if web3.isConnected():
                 break
-            t.sleep(2)
+            t.sleep(1)
 
     return web3
 
