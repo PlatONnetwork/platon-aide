@@ -15,6 +15,7 @@ class Staking(Module):
 
     def __init__(self, web3: Web3, economic: Economic = None):
         super().__init__(web3)
+        self.contract_address = self.web3.ppos.staking.address
         self._module_type = 'inner-contract'
         self._result_type = 'event'
         self._get_node_info()

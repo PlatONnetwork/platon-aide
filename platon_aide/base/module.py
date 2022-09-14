@@ -1,14 +1,13 @@
 import warnings
 from platon import Account
 from platon import Web3
-from platon.datastructures import AttributeDict
 from platon_typing import Address
 
 from platon_aide.utils import send_transaction, get_transaction_result
 
 
 class Module:
-    address: None
+    contract_address: None
 
     def __init__(self, web3: Web3):
         self.web3 = web3

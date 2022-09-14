@@ -31,6 +31,7 @@ class Govern(Module):
 
     def __init__(self, web3: Web3):
         super().__init__(web3)
+        self.contract_address = self.web3.pip.address
         self._module_type = 'inner-contract'
         self._result_type = 'event'
         self._get_node_info()

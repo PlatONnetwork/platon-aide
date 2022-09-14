@@ -11,6 +11,7 @@ class Delegate(Module):
 
     def __init__(self, web3: Web3, economic: Economic = None):
         super().__init__(web3)
+        self.contract_address = self.web3.ppos.delegate.delegateBase.address
         self._module_type = 'inner-contract'
         self._result_type = 'event'
         self._get_node_info()
@@ -104,7 +105,6 @@ class Delegate(Module):
         """
         if self.default_account:
             address = address or self.default_account.address
-        # return self.web3.ppos.delegate.get_delegate_list(address)
         delegate_list = self.web3.ppos.delegate.get_delegate_list(address)
         if delegate_list == 'Retreiving delegation related mapping failed:RelatedList info is not found':
             return []

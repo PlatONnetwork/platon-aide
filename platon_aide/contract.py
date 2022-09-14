@@ -13,7 +13,7 @@ from platon_aide.utils import contract_call, contract_transaction
 class Contract(Module):
     abi: ABI = None
     bytecode: HexStr = None
-    address: AnyAddress = None
+    contract_address: AnyAddress = None
     vm_type: str = None
 
     def init(self,
@@ -33,8 +33,8 @@ class Contract(Module):
                private_key=None,
                *init_args,
                **init_kwargs):
-        if self.address:
-            warnings.warn(f'contract {self.address} already exists, it will be replaced.', RuntimeWarning)
+        if self.contract_address:
+            warnings.warn(f'contract {self.contract_address} already exists, it will be replaced.', RuntimeWarning)
 
         _temp_origin = self.web3.platon.contract(abi=abi, bytecode=bytecode, vm_type=vm_type)
         txn = _temp_origin.constructor(*init_args, **init_kwargs).build_transaction(txn)
@@ -56,9 +56,9 @@ class Contract(Module):
                          ):
         self.abi = abi
         self.bytecode = bytecode
-        self.address = address
+        self.contract_address = address
         self.vm_type = vm_type
-        self._origin = self.web3.platon.contract(address=self.address, abi=self.abi, bytecode=self.bytecode, vm_type=self.vm_type)
+        self._origin = self.web3.platon.contract(address=self.contract_address, abi=self.abi, bytecode=self.bytecode, vm_type=self.vm_type)
         self.functions = self._origin.functions
         self.events = self._origin.events
         self._set_functions(self._origin.functions)

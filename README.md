@@ -9,6 +9,7 @@ pip install platon_aide
 
 
 # 使用方法
+
 ```python
 from platon_account import Account
 
@@ -16,7 +17,6 @@ from platon_aide import Aide
 from platon_aide.economic import new_economic
 
 uri = 'http://192.168.120.121:6789'
-
 
 """
 初始化部分
@@ -30,7 +30,6 @@ aide = Aide(uri)
 data = {"common":{"maxEpochMinutes":3,"nodeBlockTimeWindow":10,"perRoundBlocks":10,"maxConsensusVals":4,"additionalCycleTime":28},"staking":{"stakeThreshold":100000000000000000000000,"operatingThreshold":10000000000000000000,"maxValidators":5,"unStakeFreezeDuration":2,"rewardPerMaxChangeRange":500,"rewardPerChangeInterval":2},"slashing":{"slashFractionDuplicateSign":100,"duplicateSignReportReward":50,"maxEvidenceAge":1,"slashBlocksReward":5,"zeroProduceCumulativeTime":1,"zeroProduceNumberThreshold":1,"zeroProduceFreezeDuration":1},"gov":{"versionProposalVoteDurationSeconds":1600,"versionProposalSupportRate":6670,"textProposalVoteDurationSeconds":160,"textProposalVoteRate":5000,"textProposalSupportRate":6670,"cancelProposalVoteRate":5000,"cancelProposalSupportRate":6670,"paramProposalVoteDurationSeconds":160,"paramProposalVoteRate":5000,"paramProposalSupportRate":6670},"reward":{"newBlockRate":50,"platonFoundationYear":10,"increaseIssuanceRatio":250,"theNumberOfDelegationsReward":2},"restricting":{"minimumRelease":100000000000000000000},"innerAcc":{"platonFundAccount":"lat1drz94my95tskswnrcnkdvnwq43n8jt6dmzf8h8","platonFundBalance":0,"cdfAccount":"lat1kvurep20767ahvrkraglgd9t34w0w2g059pmlx","cdfBalance":421411981000000000000000000}}
 economic = new_economic(data)
 aide = Aide(uri, economic=economic, exclude_api=['admin', 'debug'])
-
 
 """
 交易签名部分
@@ -60,7 +59,6 @@ print(aide.web3.clientVersion)
 # 调用内置合约
 print(aide.delegate.get_delegate_lock_info())
 
-
 """
 调用合约部分
 """
@@ -71,12 +69,12 @@ bytecode = '608060405234801561001057600080fd5b50610107806100206000396000f3fe6080
 
 # 部署新的合约
 contract = aide.contract.deploy(abi=abi, bytecode=bytecode)
-print(contract.address)
+print(contract.contract_address)
 
 # 已有合约，直接初始化
 contract_address = '0x00'
 contract = aide.contract.init(abi=abi, address=contract_address)
-print(contract.address)
+print(contract.contract_address)
 
 # call调用
 print(aide.contract.getChainID())
