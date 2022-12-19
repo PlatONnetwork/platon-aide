@@ -1,55 +1,45 @@
-import warnings
-from platon import Account
-from platon import Web3
-from platon_typing import Address
+from typing import TYPE_CHECKING, Literal
 
-from platon_aide.utils import send_transaction, get_transaction_result
+if TYPE_CHECKING:
+    from platon_aide import Aide
 
 
 class Module:
-    contract_address: None
 
-    def __init__(self, web3: Web3):
-        self.web3 = web3
-        self.default_account: Account = None
-        # todo: 设置默认地址
-        self.default_address: Address = None
+    def __init__(self, aide: "Aide", module_type: str = Literal['', 'inner-contract']):
+        self.aide = aide
+        # 模块类型，当前仅用于判断是否自动解析内置合约的事件
+        self.module_type = module_type
 
-        # 模块类型，目前仅用于判断是否可以返回event，包括：'inner-contract'
-        self._module_type = ''
-        # 返回结果类型，包括：txn, hash, receipt, event(仅内置合约可用)
-        self._result_type = 'receipt'
+    def _transaction_handler_(self,
+                              txn,
+                              func_id=None,
+                              private_key=None,
+                              ):
+        """
+        发送签名交易，并根据结果类型获取交易结果
 
-    def set_default_account(self, account):
-        self.default_account = account
+        Args:
+            txn: 要发送的交易dict
+            func_id: 方法id（仅内置合约需要用到）
+            private_key: 用于签名交易的私钥
+        """
+        if self.aide.result_type == "txn":
+            return txn
 
-    def _get_node_info(self):
-        if hasattr(self.web3.node, 'admin'):
-            node_info = self.web3.node.admin.node_info()
-            # self._node_id = node_info['id']       # todo: 增加不使用id字段的注释
-            self._node_id = node_info['enode'].split('//')[1].split('@')[0]  # 请使用enode中的节点
-            self._bls_pubkey = node_info['blsPubKey']
-            self._bls_proof = self.web3.node.admin.get_schnorr_NIZK_prove()
-            version_info = self.web3.node.admin.get_program_version()
-            self._version = version_info['Version']
-            self._version_sign = version_info['Sign']
+        tx_hash = self.aide.send_transaction(txn, private_key=private_key)
 
-    def send_transaction(self, txn, private_key, result_type=''):
-        result_type = result_type or self._result_type
+        if self.aide.result_type == 'hash':
+            return tx_hash
 
-        if not private_key and self.default_account:
-            private_key = self.default_account.privateKey.hex()[2:]
+        receipt = self.aide.web3.platon.wait_for_transaction_receipt(tx_hash)
+        if type(receipt) is bytes:
+            receipt = receipt.decode('utf-8')
 
-        tx_hash = send_transaction(self.web3, txn, private_key)
-        return get_transaction_result(self.web3, tx_hash, result_type)
+        if self.module_type != 'inner-contract' and (self.aide.result_type == 'receipt' or self.aide.result_type == 'auto'):
+            return receipt
 
-    def set_result_type(self, result_type):
-        if result_type not in ('txn', 'hash', 'receipt', 'event'):
-            raise ValueError('Unrecognized value')
+        if self.module_type == 'inner-contract' and (self.aide.result_type == 'event' or self.aide.result_type == 'auto'):
+            return self.aide.decode_data(receipt, func_id=func_id)
 
-        if result_type == 'event' and self._module_type != 'inner-contract':
-            warnings.warn(f'result type "event" only support inner contract, '
-                          f'try set {self.__class__.__name__} result type to "receipt"', RuntimeWarning)
-            result_type = 'receipt'
-
-        self._result_type = result_type
+        raise ValueError(f'unsupported module type {self.module_type} or unknown result type {self.aide.result_type}')

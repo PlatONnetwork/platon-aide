@@ -36,9 +36,10 @@ class Contract(Module):
         if self.contract_address:
             warnings.warn(f'contract {self.contract_address} already exists, it will be replaced.', RuntimeWarning)
 
-        _temp_origin = self.web3.platon.contract(abi=abi, bytecode=bytecode, vm_type=vm_type)
+        _temp_origin = self.aide.web3.platon.contract(abi=abi, bytecode=bytecode, vm_type=vm_type)
         txn = _temp_origin.constructor(*init_args, **init_kwargs).build_transaction(txn)
-        receipt = self.send_transaction(txn, private_key)
+        tx_hash = self.aide.send_transaction(txn, private_key)
+        receipt = self.aide.platon.wait_for_transaction_receipt(tx_hash, timeout=20)
 
         address = receipt.get('contractAddress')
         if not address:
@@ -58,7 +59,7 @@ class Contract(Module):
         self.bytecode = bytecode
         self.contract_address = address
         self.vm_type = vm_type
-        self._origin = self.web3.platon.contract(address=self.contract_address, abi=self.abi, bytecode=self.bytecode, vm_type=self.vm_type)
+        self._origin = self.aide.web3.platon.contract(address=self.contract_address, abi=self.abi, bytecode=self.bytecode, vm_type=self.vm_type)
         self.functions = self._origin.functions
         self.events = self._origin.events
         self._set_functions(self._origin.functions)

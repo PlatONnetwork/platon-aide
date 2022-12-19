@@ -34,7 +34,7 @@ def test_create_staking():
     assert result['status'] == 1
     staking_info = aide.staking.get_candidate_info()
     assert staking_info.Status == 0
-    assert staking_info.NodeId == aide.staking._node_id
+    assert staking_info.NodeId == aide.staking.node_id
     assert staking_info.Shares == aide.staking._economic.staking_limit
 
 
@@ -63,7 +63,7 @@ def test_create_staking_noprivate_key():
     assert result['status'] == 1
     staking_info = aide.staking.get_candidate_info()
     assert staking_info.Status == 0
-    assert staking_info.NodeId == aide.staking._node_id
+    assert staking_info.NodeId == aide.staking.node_id
     assert staking_info.Shares == aide.staking._economic.staking_limit
     assert staking_info.StakingAddress == address
 
@@ -99,7 +99,7 @@ def test_withdrew_staking():
     assert result['status'] == 1
     candidate_list = aide.staking.get_candidate_list()
     nodeid_list = [staking_info.NodeId for staking_info in candidate_list]
-    assert aide.staking._node_id not in nodeid_list
+    assert aide.staking.node_id not in nodeid_list
 
 
 def test_get_verifier_list():
@@ -118,12 +118,12 @@ def test_get_candidate_list():
     candidate_list = aide.staking.get_candidate_list()
     print(candidate_list)
     nodeid_list = [staking_info.NodeId for staking_info in candidate_list]
-    assert aide.staking._node_id in nodeid_list
+    assert aide.staking.node_id in nodeid_list
 
 
 def test_get_candidate_info():
     candidate_info = aide.staking.get_candidate_info()
-    assert candidate_info.NodeId == aide.staking._node_id
+    assert candidate_info.NodeId == aide.staking.node_id
 
 
 def test_get_block_reward():

@@ -1,17 +1,17 @@
-from platon import Web3
+from typing import TYPE_CHECKING
 
 from platon_aide.base.module import Module
 from platon_aide.utils import contract_transaction
 
+if TYPE_CHECKING:
+    from platon_aide import Aide
+
 
 class Slashing(Module):
 
-    def __init__(self, web3: Web3):
-        super().__init__(web3)
-        self.contract_address = self.web3.ppos.slashing.address
-        self._module_type = 'inner-contract'
-        self._result_type = 'event'
-        self._get_node_info()
+    def __init__(self, aide: "Aide"):
+        super().__init__(aide, module_type='inner-contract')
+        self.ADDRESS = self.aide.web3.ppos.slashing.address
 
     @contract_transaction()
     def report_duplicate_sign(self,
@@ -20,12 +20,12 @@ class Slashing(Module):
                               txn=None,
                               private_key=None,
                               ):
-        return self.web3.ppos.slashing.report_duplicate_sign(report_type, data)
+        return self.aide.web3.ppos.slashing.report_duplicate_sign(report_type, data)
 
     def check_duplicate_sign(self,
                              report_type,
                              block_identifier,
                              node_id=None,
                              ):
-        node_id = node_id or self._node_id
-        return self.web3.ppos.slashing.check_duplicate_sign(report_type, node_id, block_identifier)
+        node_id = node_id or self.aide.node_id
+        return self.aide.web3.ppos.slashing.check_duplicate_sign(report_type, node_id, block_identifier)

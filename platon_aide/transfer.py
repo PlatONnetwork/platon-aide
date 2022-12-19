@@ -4,22 +4,24 @@ from platon_aide.base.module import Module
 class Transfer(Module):
     transferGas: int = 21000
 
-    # 转账交易
     def transfer(self, to_address, amount, txn=None, private_key=None):
+        """ 发送转账交易
+        """
         base_txn = {
             "to": to_address,
-            "gasPrice": self.web3.platon.gas_price,
+            "gasPrice": self.aide.platon.gas_price,
             "gas": self.transferGas,
             "data": '',
-            "chainId": self.web3.chain_id,
+            "chainId": self.aide.chain_id,
             "value": amount,
         }
+
         if txn:
             base_txn.update(txn)
-        txn = base_txn
-        if self._result_type == 'txn':
-            return txn
-        return self.send_transaction(txn, private_key, self._result_type)
+
+        return self._transaction_handler_(base_txn, private_key=private_key)
 
     def get_balance(self, address, block_identifier=None):
-        return self.web3.platon.get_balance(address, block_identifier)
+        """ 查询自由金额的余额
+        """
+        return self.aide.platon.get_balance(address, block_identifier)

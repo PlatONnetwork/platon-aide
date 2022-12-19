@@ -23,7 +23,7 @@ with open('./README.md', encoding='utf-8') as readme:
 setup(
     name='platon-aide',
     # *IMPORTANT*: Don't manually change the version here. Use the 'bumpversion' utility.
-    version='1.3.7',
+    version='1.3.9',
     description="""An aide that helps you quickly access the platon chain and use its basic functions.""",
     long_description=long_description,
     long_description_content_type='text/markdown',

@@ -213,13 +213,13 @@ class Economic:
     def param_proposal_epochs(self):
         """ 参数提案投票期的结算周期数
         """
-        return self.govern.paramProposalVoteDurationSeconds // self.epoch_time
+        return self.gov.paramProposalVoteDurationSeconds // self.epoch_time
 
     @property
     def text_proposal_epochs(self):
         """ 文本提案投票期的结算周期数
         """
-        return self.govern.textProposalVoteDurationSeconds // self.epoch_time
+        return self.gov.textProposalVoteDurationSeconds // self.epoch_time
 
 
 def new_economic(data: Union[dict, str]):

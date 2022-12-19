@@ -1,10 +1,15 @@
 import time
+import warnings
 from typing import Literal
 
+import rlp
+from hexbytes import HexBytes
 from loguru import logger
+from platon._utils.inner_contract import InnerContractEvent
 from platon.main import get_default_modules
 from platon.middleware import gplaton_poa_middleware
 from platon_account import Account, DEFAULT_HRP
+from platon_account.signers.local import LocalAccount
 from platon_utils import to_bech32_address, to_checksum_address, combomethod
 from platon_aide.transfer import Transfer
 from platon_aide.restricting import Restricting
@@ -16,7 +21,12 @@ from platon_aide.delegate import Delegate
 from platon_aide.slashing import Slashing
 from platon_aide.govern import Govern
 from platon_aide.graphqls import Graphql
-from platon_aide.utils import get_web3, ec_recover
+from platon_aide.utils import get_web3
+from platon_account._utils.signing import to_standard_signature_bytes
+from platon_hash.auto import keccak
+from platon_keys.datatypes import Signature
+from platon_typing import HexStr
+from platon_utils import remove_0x_prefix, to_canonical_address
 
 
 def get_modules(exclude: list = None):
@@ -35,65 +45,83 @@ def get_modules(exclude: list = None):
 
 
 class Aide:
-    """ 主类，platon各个子模块的集合体，同时支持创建账户、解码等非交易类的操作
+    """ 主类，功能如下：
+    1. 各个子模块的集合体，通过它来调用子模块发送交易
+    2. 持有设置数据，如：默认交易账户、经济模型数据、返回结果类型等
+    3. 包含一些常用方法，如：创建账户、等待块高/周期、区块解码等
     """
-    hrp: str = ''
 
-    def __init__(self,
-                 uri: str,
-                 gql_uri: str = None,
-                 chain_id: int = None,
-                 hrp: str = None,
-                 economic: Economic = None,
-                 exclude_api: list = None,
-                 ):
-        self.uri = uri
-        self.gql_uri = gql_uri
-        # web3相关设置
-        modules = get_modules(exclude_api)
-        self.web3 = get_web3(uri, chain_id, hrp, modules=modules)
-        self.web3.middleware_onion.inject(gplaton_poa_middleware, layer=0)
-        self.hrp = hrp or self.web3.hrp
-        self.chain_id = chain_id or self.web3.platon.chain_id
-        self.__set_web3_attr()
-        # 属性对象设置
-        self.economic = new_economic(self.debug.economic_config()) if self.debug else economic
-        self.calculator = Calculator(self.web3, economic=self.economic)
-        self.transfer = Transfer(self.web3)
-        self.restricting = Restricting(self.web3)
-        self.staking = Staking(self.web3, economic=self.economic)
-        self.delegate = Delegate(self.web3, economic=self.economic)
-        self.slashing = Slashing(self.web3)
-        self.govern = Govern(self.web3)
-        self.contract = Contract(self.web3)
-        self.graphql = Graphql(self.gql_uri) if self.gql_uri else None
-
-    def __set_web3_attr(self):
-        self.platon = self.web3.platon
-        self.admin = self.web3.node.admin if hasattr(self.web3, 'admin') else None
-        self.txpool = self.web3.node.txpool if hasattr(self.web3.node, 'txpool') else None
-        self.personal = self.web3.node.personal if hasattr(self.web3.node, 'personal') else None
-        self.debug = self.web3.debug if hasattr(self.web3, 'debug') else None
-
-    def set_default_account(self, account):
-        """ 设置默认账户
+    def __init__(self, uri: str, economic: Economic = None):
         """
-        self.transfer.set_default_account(account)
-        self.restricting.set_default_account(account)
-        self.staking.set_default_account(account)
-        self.delegate.set_default_account(account)
-        self.slashing.set_default_account(account)
-        self.govern.set_default_account(account)
-        self.contract.set_default_account(account)
+        Args:
+            uri: 节点开放的RPC链接
+            economic: 链上经济模型数据，会自动获取（需要debug接口开放），缺少经济模型数据会导致部分功能不可用。
+        """
+        self.uri = uri
+        self.economic = economic
+        self.default_account: LocalAccount = None  # 发送签名交易时适用的默认地址
+        self.result_type = 'auto'  # 交易返回的结果类型，包括：auto, txn, hash, receipt, event（仅适用于内置合约，其他合约必须要手动解析）
+        # web3相关设置
+        self.web3 = get_web3(uri)
+        self.web3.middleware_onion.inject(gplaton_poa_middleware, layer=0)
+        self.hrp = self.web3.hrp
+        self.chain_id = self.web3.platon.chain_id
+        # 设置模块
+        self.__init_web3__()
+        self.__init_platon__()
 
-    def set_result_type(self, result_type):
-        self.transfer.set_result_type(result_type)
-        self.restricting.set_result_type(result_type)
-        self.staking.set_result_type(result_type)
-        self.delegate.set_result_type(result_type)
-        self.slashing.set_result_type(result_type)
-        self.govern.set_result_type(result_type)
-        self.contract.set_result_type(result_type)
+    def __init_web3__(self):
+        """ 设置web相关模块
+        """
+        self.platon = self.web3.platon
+        self.txpool = self.web3.node.txpool
+        self.personal = self.web3.node.personal
+        self.admin = self.web3.node.admin
+        self.debug = self.web3.debug
+
+    def __init_platon__(self):
+        """ 设置platon内置合约相关模块
+        """
+        if not self.economic:
+            try:
+                self.economic = new_economic(self.debug.economic_config())
+            except IOError:
+                warnings.warn('The debug api is not open, cannot get the economic data automatically')
+
+        self.graphql = Graphql(f'{self.uri}/platon/graphql')
+        self.calculator = Calculator(self)
+        self.transfer = Transfer(self)
+        self.restricting = Restricting(self)
+        self.staking = Staking(self)
+        self.delegate = Delegate(self)
+        self.slashing = Slashing(self)
+        self.govern = Govern(self)
+        self.contract = Contract(self)
+
+    @property
+    def node_id(self):
+        node_info = self.web3.node.admin.node_info()
+        node_id = node_info['enode'].split('//')[1].split('@')[0]  # 请使用enode中的节点id
+        return node_id
+
+    @property
+    def node_version(self):
+        version_info = self.web3.node.admin.get_program_version()
+        return version_info['Version']
+
+    @property
+    def bls_pubkey(self):
+        node_info = self.web3.node.admin.node_info()
+        return node_info['blsPubKey']
+
+    @property
+    def bls_proof(self):
+        return self.web3.node.admin.get_schnorr_NIZK_prove()
+
+    @property
+    def version_sign(self):
+        version_info = self.web3.node.admin.get_program_version()
+        return version_info['Sign']
 
     @combomethod
     def create_account(self, hrp=None):
@@ -156,11 +184,61 @@ class Aide:
         """
         current_period, _, _ = self.calculator.get_period_info(period_type=period_type)
         dest_period = current_period + wait_count - 1  # 去掉当前的指定周期
-        _, end_block = self.calculator.get_period_ends(dest_period)
+        _, end_block = self.calculator.get_period_ends(dest_period, period_type=period_type)
         self.wait_block(end_block)
 
+    def set_default_account(self, account: LocalAccount):
+        """ 设置发送交易的默认账户
+        """
+        self.default_account = account
+
+    def set_result_type(self,
+                        result_type: Literal['auto', 'txn', 'hash', 'receipt', 'event']
+                        ):
+        """ 设置返回结果类型，建议设置为auto
+        """
+        self.result_type = result_type
+
+    def send_transaction(self, txn: dict, private_key=None):
+        """ 签名交易并发送，返回交易hash
+        """
+        if not private_key and self.default_account:
+            private_key = self.default_account.key
+
+        if not txn.get('nonce'):
+            account = self.platon.account.from_key(private_key, hrp=self.hrp)
+            txn['nonce'] = self.platon.get_transaction_count(account.address)
+
+        signed_txn = self.platon.account.sign_transaction(txn, private_key, self.hrp)
+        tx_hash = self.platon.send_raw_transaction(signed_txn.rawTransaction)
+        return bytes(tx_hash).hex()
+
+    @staticmethod
+    def decode_data(receipt, func_id=None):
+        return InnerContractEvent(func_id).processReceipt(receipt)
+
     def ec_recover(self, block_identifier):
-        """ 获取出块节点公钥
+        """ 使用keccak方式，解出区块的签名节点公钥
         """
         block = self.web3.platon.get_block(block_identifier)
-        return ec_recover(block)
+
+        extra = block.proofOfAuthorityData[:32]
+        sign = block.proofOfAuthorityData[32:]
+        raw_data = [bytes.fromhex(remove_0x_prefix(block.parentHash.hex())),
+                    to_canonical_address(block.miner),
+                    bytes.fromhex(remove_0x_prefix(block.stateRoot.hex())),
+                    bytes.fromhex(remove_0x_prefix(block.transactionsRoot.hex())),
+                    bytes.fromhex(remove_0x_prefix(block.receiptsRoot.hex())),
+                    bytes.fromhex(remove_0x_prefix(block.logsBloom.hex())),
+                    block.number,
+                    block.gasLimit,
+                    block.gasUsed,
+                    block.timestamp,
+                    extra,
+                    bytes.fromhex(remove_0x_prefix(block.nonce.hex()))
+                    ]
+        hash_bytes = HexBytes(keccak(rlp.encode(raw_data)))
+        signature_bytes = HexBytes(sign)
+        signature_bytes_standard = to_standard_signature_bytes(signature_bytes)
+        signature = Signature(signature_bytes=signature_bytes_standard)
+        return remove_0x_prefix(HexStr(signature.recover_public_key_from_msg_hash(hash_bytes).to_hex()))

@@ -1,43 +1,34 @@
 import math
 import warnings
+
 from decimal import Decimal
 from typing import Literal
-
 from loguru import logger
-from platon import Web3
 
 from platon_aide.base import Module
-from platon_aide.utils import ec_recover
-from platon_aide.economic import Economic, new_economic
-from platon_aide.staking import Staking
 
 
 class Calculator(Module):
-
-    def __init__(self, web3: Web3, economic: Economic = None):
-        super().__init__(web3)
-        self._economic = new_economic(web3.debug.economic_config()) if not economic and hasattr(web3, 'debug') else economic
-        self._staking = Staking(web3, economic=self._economic)
 
     def get_verifier_count(self):
         """ 获取结算周期的验证人数
         备注：目前链上只能获取当前结算周期的验证人数
         """
-        verifier_list = self.web3.ppos.staking.get_verifier_list()
+        verifier_list = self.aide.web3.ppos.staking.get_verifier_list()
         return len(verifier_list)
 
     def get_block_count(self, node_id, start_bn=None, end_bn=None):
         """ 获取节点出块数
         """
         start_bn = start_bn or 0
-        end_bn = end_bn or self.web3.platon.block_number
+        end_bn = end_bn or self.aide.platon.block_number
         if end_bn - start_bn > 1000:
             warnings.warn('too many blocks to analyze, it will be a long wait')
 
         block_count = 0
         for bn in range(start_bn, end_bn):
-            block = self.web3.platon.get_block(bn)
-            public_key = ec_recover(block)
+            block = self.aide.platon.get_block(bn)
+            public_key = self.aide.ec_recover(block)
             if node_id in public_key:
                 block_count = block_count + 1
 
@@ -56,15 +47,15 @@ class Calculator(Module):
             raise ValueError('unknown period type.')
 
         blocks = {
-            'round': self._economic.round_blocks,
-            'consensus': self._economic.consensus_blocks,
-            'epoch': self._economic.epoch_blocks,
-            'increasing': self._economic.increasing_blocks,
+            'round': self.aide.economic.round_blocks,
+            'consensus': self.aide.economic.consensus_blocks,
+            'epoch': self.aide.economic.epoch_blocks,
+            'increasing': self.aide.economic.increasing_blocks,
         }
         period_blocks = blocks[period_type]
 
         if not block_number:
-            block_number = self.web3.platon.block_number
+            block_number = self.aide.platon.block_number
 
         period = math.ceil(block_number / period_blocks)
         start_block, end_block = self.get_period_ends(period, period_type)
@@ -81,10 +72,10 @@ class Calculator(Module):
             raise ValueError('unknown period type.')
 
         blocks = {
-            'round': self._economic.round_blocks,
-            'consensus': self._economic.consensus_blocks,
-            'epoch': self._economic.epoch_blocks,
-            'increasing': self._economic.increasing_blocks,
+            'round': self.aide.economic.round_blocks,
+            'consensus': self.aide.economic.consensus_blocks,
+            'epoch': self.aide.economic.epoch_blocks,
+            'increasing': self.aide.economic.increasing_blocks,
         }
         period_blocks = blocks[period_type]
         start_block, end_block = (period - 1) * period_blocks + 1, period * period_blocks
@@ -94,8 +85,9 @@ class Calculator(Module):
     def get_reward_info(self):
         """ 获取当前结算周期的奖励信息
         """
-        total_staking_reward = self.web3.ppos.staking.get_staking_reward()
-        per_block_reward = self.web3.ppos.staking.get_block_reward()
+        # todo: 删除该方法
+        total_staking_reward = self.aide.web3.ppos.staking.get_staking_reward()
+        per_block_reward = self.aide.web3.ppos.staking.get_block_reward()
         return total_staking_reward, per_block_reward
 
     # def get_node_reward(self, node_id):
@@ -136,9 +128,9 @@ class Calculator(Module):
     # def get_staking_reward(self, node_id):
     #     """ 即时计算上一个结算周期，节点的质押奖励
     #     """
-    #     total_staking_reward = self.web3.ppos.staking.get_staking_reward()
+    #     total_staking_reward = self.aide.web3.ppos.staking.get_staking_reward()
     #     verifier_count = self.get_verifier_count()
-    #     per_block_reward = self.web3.ppos.staking.get_block_reward()
+    #     per_block_reward = self.aide.web3.ppos.staking.get_block_reward()
     #     # 获取上一个结算周期内，节点的出块数
     #     epoch, _, _ = self.get_period_info(self.web3.platon.block_number, 'epoch')
     #     start_bn, end_bn = self.get_period_ends(epoch - 1)
@@ -257,10 +249,10 @@ class Calculator(Module):
     def calc_report_multi_sign_reward(self, staking_amount):
         """ 计算举报双签的奖励
         """
-        slashing_ratio = self._economic.slashing.slashFractionDuplicateSign
+        slashing_ratio = self.aide.economic.slashing.slashFractionDuplicateSign
         slashing_amount = Decimal(staking_amount) * (Decimal(slashing_ratio) / 10000)
 
-        reward_ratio = self._economic.slashing.duplicateSignReportReward
+        reward_ratio = self.aide.economic.slashing.duplicateSignReportReward
         report_reward = slashing_amount * (Decimal(reward_ratio) / 100)
 
         to_incentive_pool_amount = slashing_amount - report_reward

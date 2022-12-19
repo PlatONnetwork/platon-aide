@@ -110,4 +110,4 @@ def test_get_delegate_reward():
     aide.wait_block(block_number + 160)
     delegate_reward = aide.delegate.get_delegate_reward(address=address,
                                                         node_ids=[])
-    assert delegate_reward[0]['nodeID'] == aide.staking._node_id
+    assert delegate_reward[0]['nodeID'] == aide.staking.node_id

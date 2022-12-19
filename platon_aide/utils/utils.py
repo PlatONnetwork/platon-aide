@@ -5,20 +5,11 @@ import sys
 from os.path import abspath
 from typing import cast
 
-import rlp
-from hexbytes import HexBytes
-
 from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
-from platon._utils.inner_contract import InnerContractEvent
 from platon._utils.threads import Timeout
 from platon.datastructures import AttributeDict
 from platon.exceptions import ContractLogicError
-from platon.types import BlockData, CodeData
-from platon_account._utils.signing import to_standard_signature_bytes
-from platon_hash.auto import keccak
-from platon_keys.datatypes import Signature
-from platon_typing import HexStr
-from platon_utils import remove_0x_prefix, to_canonical_address
+from platon.types import CodeData
 
 from gql import Client
 from gql.transport.aiohttp import AIOHTTPTransport
@@ -61,43 +52,6 @@ def get_gql(uri):
     return Client(transport=transport(uri), fetch_schema_from_transport=True)
 
 
-def send_transaction(web3: Web3, txn: dict, private_key: str):
-    """
-    签名交易并发送，可以获取交易hash或交易回执
-
-    Args:
-        web3: Web3对象
-        txn: 要发送的交易dict
-        private_key: 地址私钥，用于签名交易
-        returns: 指定要返回的结果，取值如下：
-                - 'hash': 返回交易哈希
-                - 'receipt': 返回交易回执
-                - 'event': 返回内置合约的event内容
-    """
-    if not private_key:
-        return web3.platon.send_transaction(txn)
-
-    if not txn.get('nonce'):
-        account = web3.platon.account.from_key(private_key, hrp=web3.hrp)
-        txn['nonce'] = web3.platon.get_transaction_count(account.address)
-
-    signed_txn = web3.platon.account.sign_transaction(txn, private_key, web3.hrp)
-    return web3.platon.send_raw_transaction(signed_txn.rawTransaction)
-
-
-def get_transaction_result(web3: Web3, tx_hash, result_type):
-    """ 根据指定的result type，来获取交易的返回值
-    """
-    if result_type == 'hash':
-        return bytes(tx_hash).hex()
-    receipt = web3.platon.wait_for_transaction_receipt(tx_hash)
-    if type(receipt) is bytes:
-        receipt = receipt.decode('utf-8')
-    if result_type == 'receipt':
-        return receipt
-    raise ValueError(f'unknown result type: {result_type}')
-
-
 def contract_call(func):
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -106,92 +60,59 @@ def contract_call(func):
     return wrapper
 
 
+# 合约交易装饰器，仅用于接受参数
 def contract_transaction(func_id=None, default_txn=None):
-    """ todo: 增加注释
-    """
-
-    def out_wrapper(func):
+    # 实际装饰器
+    def decorator(func):
 
         @functools.wraps(func)
-        def wrapper(self, *args, txn=default_txn, private_key=None, **kwargs):
-            # 预填充from地址，避免预估gas时地址相关检验不通过
-            account = self.web3.platon.account.from_key(private_key, hrp=self.web3.hrp) if private_key else self.default_account
-            if not txn:
-                txn = {}
-            if not txn.get('from'):
-                txn['from'] = account.address
+        def wrapper(self, *args, txn: dict = None, private_key=None, **kwargs):
+            """
+            """
+            # 合并交易体
+            if txn:
+                if default_txn:
+                    default_txn.update(txn)
+                    txn = default_txn
+            else:
+                txn = default_txn if default_txn else {}
 
+            # 填充from地址，以免合约交易在预估gas时检验地址失败
+            if not txn.get('from'):
+                account = self.web3.platon.account.from_key(private_key, hrp=self.web3.hrp) if private_key else self.aide.default_account
+                if account:
+                    txn['from'] = account.address
+
+            # 构造合约方法对象
             if func.__name__ == 'fit_func':
                 # solidity合约方法不传入private key参数，避免abi解析问题
                 fn = func(self, *args, **kwargs)
             else:
-                # 内置合约
+                # 内置合约有时候需要用到私钥信息，用于生成参数的默认值，如：staking
                 fn = func(self, *args, private_key=private_key, **kwargs)
 
-            # 预估gas出现合约逻辑错误时，不再报错，而是返回data信息
-            # 在txn中指定gas，可以跳过该步骤（避免出现太多种返回值）
+            # 构建合约交易体dict
             try:
                 txn = fn.build_transaction(txn)
             except ContractLogicError as e:
+                # 预估gas出现合约逻辑错误时，不再报错
                 err = str(e)
+                # 判断其是否为内置合约错误
+                # todo: 优化这一段逻辑
                 if err.startswith('inner contract exec failed: '):
                     event = err.split('inner contract exec failed: ')[1]
                     data = json.loads(event.replace('\'', '"'))
                     return cast(CodeData, AttributeDict.recursive(data))
-                return err
+                raise e
 
-            # 直接返回txn
-            if self._result_type == 'txn':
-                return txn
-
-            if self._result_type == 'receipt' or self._result_type == 'hash':
-                return self.send_transaction(txn, private_key, self._result_type)
-
-            if self._result_type == 'event':
-                if self._module_type != 'inner-contract':
-                    raise TypeError('result type "event" only support inner contract')
-
-                receipt = self.send_transaction(txn, private_key, 'receipt')
-                return InnerContractEvent(func_id).processReceipt(receipt)
-
-            raise ValueError(f'unknown result type: {self._result_type}')
+            return self._transaction_handler_(txn, private_key)
 
         return wrapper
 
-    return out_wrapper
+    return decorator
 
 
-def ec_recover(block: BlockData):
-    """ 使用keccak方式，解出区块的签名节点公钥
-    """
-    extra = block.proofOfAuthorityData[:32]
-    sign = block.proofOfAuthorityData[32:]
-    raw_data = [bytes.fromhex(remove_0x_prefix(block.parentHash.hex())),
-                to_canonical_address(block.miner),
-                bytes.fromhex(remove_0x_prefix(block.stateRoot.hex())),
-                bytes.fromhex(remove_0x_prefix(block.transactionsRoot.hex())),
-                bytes.fromhex(remove_0x_prefix(block.receiptsRoot.hex())),
-                bytes.fromhex(remove_0x_prefix(block.logsBloom.hex())),
-                block.number,
-                block.gasLimit,
-                block.gasUsed,
-                block.timestamp,
-                extra,
-                bytes.fromhex(remove_0x_prefix(block.nonce.hex()))
-                ]
-    hash_bytes = HexBytes(keccak(rlp.encode(raw_data)))
-    signature_bytes = HexBytes(sign)
-    signature_bytes_standard = to_standard_signature_bytes(signature_bytes)
-    signature = Signature(signature_bytes=signature_bytes_standard)
-    return remove_0x_prefix(HexStr(signature.recover_public_key_from_msg_hash(hash_bytes).to_hex()))
-
-
-def run(cmd):
-    """
-    The machine executes the cmd command and gets the result
-    :param cmd:
-    :return:
-    """
+def execute_cmd(cmd):
     r = os.popen(cmd)
     out = r.read()
     r.close()
@@ -199,26 +120,14 @@ def run(cmd):
 
 
 def mock_duplicate_sign(dtype, sk, blskey, block_number, epoch=0, view_number=0, block_index=0, index=0):
-    """
-    forged double sign
-    :param dtype:
-    :param sk:
-    :param blskey:
-    :param block_number:
-    :param epoch:
-    :param view_number:
-    :param block_index:
-    :param index:
-    :return:
-    """
     if sys.platform in "linux,linux2":
         tool_file = abspath("tool/linux/duplicateSign")
-        run("chmod +x {}".format(tool_file))
+        execute_cmd("chmod +x {}".format(tool_file))
     else:
         tool_file = abspath("tool/win/duplicateSign.exe")
     print("{} -dtype={} -sk={} -blskey={} -blockNumber={} -epoch={} -viewNumber={} -blockIndex={} -vindex={}".format(
         tool_file, dtype, sk, blskey, block_number, epoch, view_number, block_index, index))
-    output = run(
+    output = execute_cmd(
         "{} -dtype={} -sk={} -blskey={} -blockNumber={} -epoch={} -viewNumber={} -blockIndex={} -vindex={}".format(
             tool_file, dtype, sk, blskey, block_number, epoch, view_number, block_index, index))
     print(output)
