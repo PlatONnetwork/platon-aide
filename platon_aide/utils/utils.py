@@ -79,7 +79,7 @@ def contract_transaction(func_id=None, default_txn=None):
 
             # 填充from地址，以免合约交易在预估gas时检验地址失败
             if not txn.get('from'):
-                account = self.web3.platon.account.from_key(private_key, hrp=self.web3.hrp) if private_key else self.aide.default_account
+                account = self.aide.platon.account.from_key(private_key, hrp=self.aide.hrp) if private_key else self.aide.default_account
                 if account:
                     txn['from'] = account.address
 
@@ -105,7 +105,7 @@ def contract_transaction(func_id=None, default_txn=None):
                     return cast(CodeData, AttributeDict.recursive(data))
                 raise e
 
-            return self._transaction_handler_(txn, private_key)
+            return self._transaction_handler_(txn, func_id=func_id, private_key=private_key)
 
         return wrapper
 

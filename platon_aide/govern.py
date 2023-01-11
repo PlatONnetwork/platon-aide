@@ -64,13 +64,14 @@ class Govern(Module):
     def version_proposal(self,
                          version: int,
                          voting_rounds: int = 4,
-                         pip_number: str = str(time()),
+                         pip_number: str = None,
                          node_id: Union[NodeID, HexStr] = None,
                          txn=None,
                          private_key=None,
                          ):
         """ 提交版本提案，实现链上共识硬分叉版本的升级
         """
+        pip_number = pip_number or str(time())
         node_id = node_id or self.aide.node_id
         return self.aide.web3.pip.submit_version_proposal(node_id, pip_number, version, voting_rounds)
 
@@ -79,13 +80,14 @@ class Govern(Module):
                        module: str,
                        name: str,
                        value: str,
-                       pip_number: str = str(time()),
+                       pip_number: str = None,
                        node_id: Union[NodeID, HexStr] = None,
                        txn=None,
                        private_key=None,
                        ):
         """ 提交参数提案，修改链上可治理参数
         """
+        pip_number = pip_number or str(time())
         node_id = node_id or self.aide.node_id
         return self.aide.web3.pip.submit_param_proposal(node_id, pip_number, module, name, value)
 
@@ -94,24 +96,26 @@ class Govern(Module):
                         proposal_id: str,
                         voting_rounds: int = 4,
                         node_id: Union[NodeID, HexStr] = None,
-                        pip_number: str = str(time()),
+                        pip_number: str = None,
                         txn=None,
                         private_key=None,
                         ):
         """ 提交取消提案
         """
+        pip_number = pip_number or str(time())
         node_id = node_id or self.aide.node_id
         return self.aide.web3.pip.submit_cancel_proposal(node_id, pip_number, voting_rounds, proposal_id)
 
     @contract_transaction(default_txn={'gasPrice': textGasPrice})
     def text_proposal(self,
-                      pip_number: str = str(time()),
+                      pip_number: str = None,
                       node_id: Union[NodeID, HexStr] = None,
                       txn=None,
                       private_key=None,
                       ):
         """ 提交文本提案，文本提案不对链上产生影响，仅做pip投票意见收集作用
         """
+        pip_number = pip_number or str(time())
         node_id = node_id or self.aide.node_id
         return self.aide.web3.pip.submit_text_proposal(node_id, pip_number)
 

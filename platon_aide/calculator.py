@@ -57,7 +57,7 @@ class Calculator(Module):
         if not block_number:
             block_number = self.aide.platon.block_number
 
-        period = math.ceil(block_number / period_blocks)
+        period = math.ceil(block_number / period_blocks) or 1
         start_block, end_block = self.get_period_ends(period, period_type)
 
         return period, start_block, end_block

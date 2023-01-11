@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 class Module:
 
-    def __init__(self, aide: "Aide", module_type: str = Literal['', 'inner-contract']):
+    def __init__(self, aide: "Aide", module_type: Literal['', 'inner-contract'] = ''):
         self.aide = aide
         # 模块类型，当前仅用于判断是否自动解析内置合约的事件
         self.module_type = module_type

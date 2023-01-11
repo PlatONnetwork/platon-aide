@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class Staking(Module):
 
     def __init__(self, aide: "Aide"):
-        super().__init__(aide, module_type='')
+        super().__init__(aide, module_type='inner-contract')
         self.ADDRESS = self.aide.web3.ppos.staking.address
 
     @property
