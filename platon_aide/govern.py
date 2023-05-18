@@ -1,8 +1,8 @@
 from time import time
 from typing import TYPE_CHECKING, Union, Literal
 
-from platon.datastructures import AttributeDict
-from platon_typing import HexStr, NodeID, BlockIdentifier
+from web3.datastructures import AttributeDict
+from eth_typing import HexStr, NodeID, BlockIdentifier
 
 from platon_aide.base.module import Module
 from platon_aide.utils import contract_transaction

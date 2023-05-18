@@ -5,10 +5,11 @@ import sys
 from os.path import abspath
 from typing import cast
 
-from platon import Web3, HTTPProvider, WebsocketProvider, IPCProvider
-from platon._utils.threads import Timeout
-from platon.datastructures import AttributeDict
-from platon.exceptions import ContractLogicError
+from web3 import HTTPProvider, WebsocketProvider, IPCProvider
+from platon import Web3
+from web3._utils.threads import Timeout
+from web3.datastructures import AttributeDict
+from web3.exceptions import ContractLogicError
 from platon.types import CodeData
 
 from gql import Client
@@ -16,7 +17,7 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.websockets import WebsocketsTransport
 
 
-def get_web3(uri, chain_id=None, hrp=None, timeout=10, modules=None):
+def get_web3(uri, timeout=10, modules=None):
     """ 通过rpc uri，获取web3对象。可以兼容历史platon版本
     """
     if uri.startswith('http'):
@@ -30,7 +31,7 @@ def get_web3(uri, chain_id=None, hrp=None, timeout=10, modules=None):
 
     with Timeout(timeout) as t:
         while True:
-            web3 = Web3(provider(uri), chain_id=chain_id, hrp=hrp, modules=modules)
+            web3 = Web3(provider(uri), modules=modules)
             if web3.isConnected():
                 break
             t.sleep(1)
@@ -79,7 +80,7 @@ def contract_transaction(func_id=None, default_txn=None):
 
             # 填充from地址，以免合约交易在预估gas时检验地址失败
             if not txn.get('from'):
-                account = self.aide.platon.account.from_key(private_key, hrp=self.aide.hrp) if private_key else self.aide.default_account
+                account = self.aide.platon.account.from_key(private_key) if private_key else self.aide.default_account
                 if account:
                     txn['from'] = account.address
 

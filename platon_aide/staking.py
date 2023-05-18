@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from platon.datastructures import AttributeDict
+from web3.datastructures import AttributeDict
 
 from platon_aide.base.module import Module
 from platon_aide.utils import contract_transaction
@@ -41,7 +41,7 @@ class Staking(Module):
                        ):
 
         if not benefit_address:
-            benefit_account = self.aide.platon.account.from_key(private_key, hrp=self.aide.hrp) if private_key else self.aide.default_account
+            benefit_account = self.aide.platon.account.from_key(private_key) if private_key else self.aide.default_account
             if not benefit_account:
                 raise ValueError('the benefit address cannot be empty')
 

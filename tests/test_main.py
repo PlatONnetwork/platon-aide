@@ -5,7 +5,6 @@ from tests.conftest import *
 
 def test_main():
     assert uri == aide.uri
-    assert aide.hrp == 'lat'
     assert aide.chain_id == 201019
 
 
@@ -29,7 +28,7 @@ def test_set_returns():
 
 def test_create_account():
     address, private_key = aide.create_account()
-    assert address[:3] == aide.hrp
+    # assert address[:3] == aide.hrp
 
 
 def test_create_hd_account():
@@ -50,10 +49,9 @@ def test_ec_recover():
 
 
 def test_set_default_account():
-    account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa',
-                                 hrp='lat')
+    account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa')
     aide.set_default_account(account)
-    assert aide.staking.default_account == 'lat1rzw6lukpltqn9rk5k59apjrf5vmt2ncv8uvfn7'
+    assert aide.staking.default_account == '0x189DAff2C1faC1328ed4B50Bd0c869A336B54F0C'
 
 
 def test_inner_vrf_contract():

@@ -11,7 +11,7 @@ pip install platon_aide
 # 使用方法
 
 ```python
-from platon_account import Account
+from eth_account import Account
 
 from platon_aide import Aide
 from platon_aide.economic import new_economic
@@ -46,9 +46,9 @@ aide = Aide(uri, economic=economic, exclude_api=['admin', 'debug'])
 交易签名部分
 """
 # 设置默认账户，后续使用aide发交易，如果不指定私钥，则都会使用默认账户签名交易
-account = Account.from_key('f51ca759562e1daf9e5302d121f933a8152915d34fcbc27e542baf256b5e4b74', aide.hrp)
+account = Account.from_key('f51ca759562e1daf9e5302d121f933a8152915d34fcbc27e542baf256b5e4b74')
 aide.set_default_account(account)
-to_account = Account.create(hrp='lat')
+to_account = Account.create()
 print(aide.transfer.transfer(to_account.address, 10 * 10 ** 18))
 
 # 使用特定私钥签名，附带自主指定交易信息方法
@@ -60,7 +60,7 @@ print(aide.transfer.transfer(to_account.address, 10 * 10 ** 18, txn=txn, private
 普通交易部分
 """
 # 发送转账
-to_account = Account.create(hrp='lat')
+to_account = Account.create()
 print(aide.transfer.transfer(to_account.address, 10 * 10 ** 18))
 
 # 调用web3

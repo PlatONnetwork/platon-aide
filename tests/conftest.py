@@ -1,5 +1,5 @@
 import pytest
-from platon import Account
+from web3 import Account
 
 from platon_aide.main import Aide
 
@@ -8,7 +8,7 @@ consensus_aide = Aide(consensus_uri)
 
 uri = 'http://192.168.16.121:6790'
 aide = Aide(uri)
-account = Account().from_key(private_key='f51ca759562e1daf9e5302d121f933a8152915d34fcbc27e542baf256b5e4b74', hrp='lat')
+account = Account().from_key(private_key='f51ca759562e1daf9e5302d121f933a8152915d34fcbc27e542baf256b5e4b74')
 aide.set_default_account(account)
 
 

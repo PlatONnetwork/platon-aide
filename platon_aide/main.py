@@ -7,10 +7,10 @@ from hexbytes import HexBytes
 from loguru import logger
 from platon._utils.inner_contract import InnerContractEvent
 from platon.main import get_default_modules
-from platon.middleware import gplaton_poa_middleware
-from platon_account import Account, DEFAULT_HRP
-from platon_account.signers.local import LocalAccount
-from platon_utils import to_bech32_address, to_checksum_address, combomethod
+from web3.middleware import geth_poa_middleware
+from eth_account import Account
+from eth_account.signers.local import LocalAccount
+from eth_utils import to_checksum_address, combomethod
 from platon_aide.transfer import Transfer
 from platon_aide.restricting import Restricting
 from platon_aide.economic import new_economic, Economic
@@ -22,11 +22,11 @@ from platon_aide.slashing import Slashing
 from platon_aide.govern import Govern
 from platon_aide.graphqls import Graphql
 from platon_aide.utils import get_web3
-from platon_account._utils.signing import to_standard_signature_bytes
-from platon_hash.auto import keccak
-from platon_keys.datatypes import Signature
-from platon_typing import HexStr
-from platon_utils import remove_0x_prefix, to_canonical_address
+from eth_account._utils.signing import to_standard_signature_bytes
+from eth_hash.auto import keccak
+from eth_keys.datatypes import Signature
+from eth_typing import HexStr
+from eth_utils import remove_0x_prefix, to_canonical_address
 
 
 def get_modules(exclude: list = None):
@@ -63,8 +63,8 @@ class Aide:
         self.result_type = 'auto'  # 交易返回的结果类型，包括：auto, txn, hash, receipt, event（仅适用于内置合约，其他合约必须要手动解析）
         # web3相关设置
         self.web3 = get_web3(uri)
-        self.web3.middleware_onion.inject(gplaton_poa_middleware, layer=0)
-        self.hrp = self.web3.hrp
+        self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        # self.hrp = self.web3.hrp
         self.chain_id = self.web3.platon.chain_id
         # 设置模块
         self.__init_web3__()
@@ -124,14 +124,13 @@ class Aide:
         return version_info['Sign']
 
     @combomethod
-    def create_account(self, hrp=None):
+    def create_account(self):
         """ 创建账户
         """
-        hrp = hrp or self.hrp or DEFAULT_HRP
-        return Account.create(hrp=hrp)
+        return Account.create()
 
     @combomethod
-    def create_hd_account(self, hrp=None):
+    def create_hd_account(self):
         """ 创建HD账户
         """
         pass
@@ -142,13 +141,13 @@ class Aide:
         """
         pass
 
-    @combomethod
-    def to_bech32_address(self, address, hrp=None):
-        """ 任意地址转换为platon形式的bech32地址
-        注意：非标准bech32地址
-        """
-        hrp = hrp or self.hrp or DEFAULT_HRP
-        return to_bech32_address(address, hrp=hrp)
+    # @combomethod
+    # def to_bech32_address(self, address, hrp=None):
+    #     """ 任意地址转换为platon形式的bech32地址
+    #     注意：非标准bech32地址
+    #     """
+    #     hrp = hrp or self.hrp or DEFAULT_HRP
+    #     return to_bech32_address(address, hrp=hrp)
 
     @combomethod
     def to_checksum_address(self, address):
@@ -206,10 +205,10 @@ class Aide:
             private_key = self.default_account.key
 
         if not txn.get('nonce'):
-            account = self.platon.account.from_key(private_key, hrp=self.hrp)
+            account = self.platon.account.from_key(private_key)
             txn['nonce'] = self.platon.get_transaction_count(account.address)
 
-        signed_txn = self.platon.account.sign_transaction(txn, private_key, self.hrp)
+        signed_txn = self.platon.account.sign_transaction(txn, private_key)
         tx_hash = self.platon.send_raw_transaction(signed_txn.rawTransaction)
         return bytes(tx_hash).hex()
 

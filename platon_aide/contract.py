@@ -1,11 +1,11 @@
 import warnings
 from functools import wraps, partial
 from typing import Literal
-from platon._utils.abi import filter_by_name
-from platon.contract import ContractFunction
-from platon.types import ABI
-from platon_typing import HexStr, AnyAddress
-
+from web3._utils.abi import filter_by_name
+from web3.contract import ContractFunction
+from web3.types import ABI
+from eth_typing import HexStr, AnyAddress
+from copy import copy
 from platon_aide.base.module import Module
 from platon_aide.utils import contract_call, contract_transaction
 
@@ -14,16 +14,16 @@ class Contract(Module):
     abi: ABI = None
     bytecode: HexStr = None
     contract_address: AnyAddress = None
-    vm_type: str = None
+    # vm_type: str = None
 
     def init(self,
              abi,
              bytecode=None,
              address=None,
-             vm_type: Literal['solidity', 'wasm'] = 'solidity',
+             # vm_type: Literal['solidity', 'wasm'] = 'solidity',
              ):
-        self.__build_contract(abi, bytecode, address, vm_type)
-        return self
+        self.__build_contract(abi, bytecode, address)
+        return copy(self)
 
     def deploy(self,
                abi,
@@ -36,7 +36,7 @@ class Contract(Module):
         if self.contract_address:
             warnings.warn(f'contract {self.contract_address} already exists, it will be replaced.', RuntimeWarning)
 
-        _temp_origin = self.aide.web3.platon.contract(abi=abi, bytecode=bytecode, vm_type=vm_type)
+        _temp_origin = self.aide.web3.platon.contract(abi=abi, bytecode=bytecode)
         txn = _temp_origin.constructor(*init_args, **init_kwargs).build_transaction(txn)
         tx_hash = self.aide.send_transaction(txn, private_key)
         receipt = self.aide.platon.wait_for_transaction_receipt(tx_hash, timeout=20)
@@ -47,19 +47,19 @@ class Contract(Module):
 
         self.__build_contract(abi, bytecode, address, vm_type)
 
-        return self
+        return copy(self)
 
     def __build_contract(self,
                          abi,
                          bytecode=None,
                          address=None,
-                         vm_type: Literal['solidity', 'wasm'] = 'solidity',
+                         # vm_type: Literal['solidity', 'wasm'] = 'solidity',
                          ):
         self.abi = abi
         self.bytecode = bytecode
         self.contract_address = address
-        self.vm_type = vm_type
-        self._origin = self.aide.web3.platon.contract(address=self.contract_address, abi=self.abi, bytecode=self.bytecode, vm_type=self.vm_type)
+        # self.vm_type = vm_type
+        self._origin = self.aide.web3.platon.contract(address=self.contract_address, abi=self.abi, bytecode=self.bytecode)
         self.functions = self._origin.functions
         self.events = self._origin.events
         self._set_functions(self._origin.functions)

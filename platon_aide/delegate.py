@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from platon.datastructures import AttributeDict
+from web3.datastructures import AttributeDict
 
 from platon_aide.base.module import Module
 from platon_aide.utils import contract_transaction

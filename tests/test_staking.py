@@ -71,7 +71,7 @@ def test_create_staking_noprivate_key():
 def test_increase_staking():
     block_number = aide.platon.block_number
     aide.wait_block(block_number + 160)
-    account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa', hrp='lat')
+    account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa')
     aide.staking.set_default_account(account)
     result = aide.staking.increase_staking(
         balance_type=0,
@@ -86,7 +86,7 @@ def test_increase_staking():
 
 
 def test_edit_candidate():
-    account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa', hrp='lat')
+    account = Account().from_key(private_key='f90fd6808860fe869631d978b0582bb59db6189f7908b578a886d582cb6fccfa')
     aide.staking.set_default_account(account)
     node_name = 'hello platon'
     result = aide.staking.edit_candidate(node_name=node_name)
