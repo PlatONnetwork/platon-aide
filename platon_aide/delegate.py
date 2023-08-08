@@ -75,7 +75,7 @@ class Delegate(Module):
         if self.aide.default_account:
             address = address or self.aide.default_account.address
         node_id = node_id or self.aide.node_id
-        staking_block_identifier = staking_block_identifier or self.aide.staking.staking_info.staking_block_number
+        staking_block_identifier = staking_block_identifier or self.aide.staking.staking_info.StakingBlockNum
 
         delegate_info = self.aide.web3.ppos.delegate.get_delegate_info(address, node_id, staking_block_identifier)
         if delegate_info == 'Query delegate info failed:Delegate info is not found':
