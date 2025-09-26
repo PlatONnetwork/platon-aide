@@ -20,15 +20,15 @@ class Calculator(Module):
     def get_block_count(self, node_id, start_bn=None, end_bn=None):
         """ 获取节点出块数
         """
-        start_bn = start_bn or 0
+        start_bn = start_bn or 1
         end_bn = end_bn or self.aide.platon.block_number
         if end_bn - start_bn > 1000:
             warnings.warn('too many blocks to analyze, it will be a long wait')
 
         block_count = 0
         for bn in range(start_bn, end_bn):
-            block = self.aide.platon.get_block(bn)
-            public_key = self.aide.ec_recover(block)
+            # block = self.aide.platon.get_block(bn)
+            public_key = self.aide.ec_recover(bn)
             if node_id in public_key:
                 block_count = block_count + 1
 

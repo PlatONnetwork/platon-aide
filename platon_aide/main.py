@@ -203,7 +203,6 @@ class Aide:
         """
         if not private_key and self.default_account:
             private_key = self.default_account.key
-
         if not txn.get('nonce'):
             account = self.platon.account.from_key(private_key)
             txn['nonce'] = self.platon.get_transaction_count(account.address)
@@ -236,6 +235,8 @@ class Aide:
                     extra,
                     bytes.fromhex(remove_0x_prefix(block.nonce.hex()))
                     ]
+        if not block.baseFeePerGas is None:
+            raw_data.append(block.baseFeePerGas)
         hash_bytes = HexBytes(keccak(rlp.encode(raw_data)))
         signature_bytes = HexBytes(sign)
         signature_bytes_standard = to_standard_signature_bytes(signature_bytes)
